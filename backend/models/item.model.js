@@ -29,12 +29,12 @@ const itemSchema = new mongoose.Schema(
     // price: { type: Number, required: true, min: 0 },
     price: { type: Number, required: true, min: 0 },
 
-discount: {
-  type: Number,
-  default: 0,
-  min: 0,
-  max: 100
-},
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
 
     stock: {
       type: Number,
@@ -58,12 +58,9 @@ discount: {
       average: { type: Number, default: 0 },
       count: { type: Number, default: 0 },
     },
-    
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Item = mongoose.model("Item", itemSchema);
 export default Item;
-
-

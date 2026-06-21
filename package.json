@@ -1,0 +1,35 @@
+{
+  "name": "restaurant",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/neelpatel1026/E_Food_wastage#readme",
+  "bugs": {
+    "url": "https://github.com/neelpatel1026/E_Food_wastage/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neelpatel1026/E_Food_wastage.git"
+  },
+  "license": "ISC",
+  "author": "Neel Patel",
+  "type": "commonjs",
+  "main": "index.js",
+   "scripts": {
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+
+    "dev:server": "npm --prefix backend run dev",
+
+    "dev:client": "npm --prefix frontend run dev",
+
+    "start": "npm --prefix backend start",
+
+    "build": "npm --prefix frontend run build",
+
+    "seed": "npm --prefix backend run seed"
+  },
+  "dependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
