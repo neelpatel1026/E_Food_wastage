@@ -81,25 +81,50 @@ const allowedOrigins = [
 /* ===============================
    Socket.IO Configuration
 ================================ */
+// const io = new Server(server, {
+//   cors: {
+//     origin: allowedOrigins,
+//     credentials: true,
+//     methods: ["GET", "POST"],
+//   },
+// });
+
+
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    credentials: true,
+    origin: "https://e-food-wastage.vercel.app",
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
-
 app.set("io", io);
 
 /* ===============================
    Middleware
 ================================ */
+// app.use(
+//   cors({
+//     origin: allowedOrigins,
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
+
+// app.options("*", cors());
 
 app.use(express.json());
 app.use(cookieParser());
