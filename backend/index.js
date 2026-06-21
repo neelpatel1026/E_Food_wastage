@@ -129,6 +129,9 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+console.log("CLIENT_URL =", process.env.CLIENT_URL);
+console.log("allowedOrigins =", allowedOrigins);
+
 /* ===============================
    Routes
 ================================ */
