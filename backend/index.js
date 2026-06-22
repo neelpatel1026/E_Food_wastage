@@ -48,7 +48,6 @@
 //   console.log(`server started at ${port}`);
 // });
 
-
 import express from "express";
 import dotenv from "dotenv";
 import connectDb from "./config/db.js";
@@ -75,7 +74,7 @@ const server = http.createServer(app);
 ================================ */
 const allowedOrigins = [
   "http://localhost:5173", // local development
-  process.env.CLIENT_URL,  // deployed frontend URL
+  process.env.CLIENT_URL, // deployed frontend URL
 ].filter(Boolean);
 
 /* ===============================
@@ -89,10 +88,17 @@ const allowedOrigins = [
 //   },
 // });
 
+// const io = new Server(server, {
+//   cors: {
+//     origin: "https://e-food-wastage.vercel.app",
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   },
+// });
 
 const io = new Server(server, {
   cors: {
-    origin: "https://e-food-wastage.vercel.app",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -121,7 +127,7 @@ app.use(
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-  })
+  }),
 );
 
 // app.options("*", cors());
