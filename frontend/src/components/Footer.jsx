@@ -50,7 +50,7 @@ function Footer() {
             Have questions or feedback? Feel free to reach out to our support team.
           </p>
           <div className="text-sm text-gray-300">
-            Email: <span className="text-orange-500">support@rebite.org</span>
+            Email: <span className="text-orange-500">neelpatel8422@gmail.com</span>
           </div>
         </div>
 
