@@ -28,19 +28,19 @@ function CartItemCard({ data }) {
     }
   };
 
+  const isExpired = data.isExpired || (data.expiresAt && new Date(data.expiresAt).getTime() <= Date.now());
+
   return (
     <div
-      className="flex items-center justify-between
-      bg-white rounded-2xl border border-gray-100
-      shadow-md hover:shadow-xl transition-all
-      p-4 gap-4"
+      className={`flex items-center justify-between bg-white rounded-2xl border transition p-4 gap-4 ${
+        isExpired 
+          ? "opacity-60 border-red-200 bg-red-50/5 grayscale-[30%] blur-[0.5px]" 
+          : "border-gray-200 shadow-sm hover:shadow-md"
+      }`}
     >
-
       {/* LEFT SECTION */}
-
       <div className="flex items-center gap-4">
-
-        <div className="w-20 h-20 rounded-xl overflow-hidden border">
+        <div className="w-16 h-16 rounded-xl overflow-hidden border border-gray-100 shrink-0 bg-gray-50">
           <img
             src={data.image}
             alt={data.name}
@@ -49,68 +49,60 @@ function CartItemCard({ data }) {
         </div>
 
         <div className="flex flex-col">
-
-          <h2 className="font-semibold text-gray-800 text-sm md:text-base">
+          <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
             {data.name}
+            {isExpired && (
+              <span className="text-[9px] font-black text-red-650 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md uppercase shrink-0">
+                Expired
+              </span>
+            )}
           </h2>
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-400 mt-0.5">
             ₹{data.price} × {data.quantity}
           </p>
 
-          <p className="font-bold text-orange-500 text-sm md:text-base">
+          <p className="font-extrabold text-orange-500 text-sm mt-1">
             ₹{data.price * data.quantity}
           </p>
-
         </div>
-
       </div>
 
       {/* RIGHT SECTION */}
-
       <div className="flex items-center gap-3">
-
         {/* Quantity Controller */}
-
         <div
-          className="flex items-center gap-3
-          bg-gray-100 rounded-full
-          px-3 py-1"
+          className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-2.5 py-1"
         >
-
           <button
-            className="text-gray-600 hover:text-orange-600 transition"
+            disabled={isExpired}
+            className="p-1 text-gray-500 hover:text-orange-500 transition disabled:opacity-30 disabled:pointer-events-none"
             onClick={handleDecrease}
           >
-            <FaMinus size={12} />
+            <FaMinus size={10} />
           </button>
 
-          <span className="font-medium text-sm w-5 text-center">
+          <span className="font-semibold text-xs w-6 text-center text-gray-800">
             {data.quantity}
           </span>
 
           <button
-            className="text-gray-600 hover:text-orange-600 transition"
+            disabled={isExpired}
+            className="p-1 text-gray-500 hover:text-orange-500 transition disabled:opacity-30 disabled:pointer-events-none"
             onClick={handleIncrease}
           >
-            <FaPlus size={12} />
+            <FaPlus size={10} />
           </button>
-
         </div>
 
         {/* Delete */}
-
         <button
-          className="p-2 rounded-full
-          bg-red-100 text-red-600
-          hover:bg-red-200 transition"
+          className="p-2 rounded-xl bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 transition"
           onClick={() => dispatch(removeCartItem(data._id))}
         >
-          <CiTrash size={18} />
+          <CiTrash size={16} />
         </button>
-
       </div>
-
     </div>
   );
 }

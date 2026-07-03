@@ -15,6 +15,11 @@ function useGetCity() {
   const { userData } = useSelector((state) => state.user);
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
   useEffect(() => {
+    if (!userData) return;
+    if (!navigator.geolocation) {
+      console.warn("Geolocation is not supported by this browser.");
+      return;
+    }
     navigator.geolocation.getCurrentPosition(async (position) => {
       console.log(position);
       const latitude = position.coords.latitude;

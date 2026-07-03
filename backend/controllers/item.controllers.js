@@ -1,6 +1,7 @@
 import Item from "../models/item.model.js";
 import Shop from "../models/shop.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
+import { logActivity } from "../utils/activityLogger.js";
 
 const applyDynamicPricing = (items) => {
   const now = new Date();
@@ -82,6 +83,15 @@ export const addItem = async (req, res) => {
       options: { sort: { updatedAt: -1 } },
     });
 
+    logActivity(req, {
+      activityType: "Food",
+      action: "Food Added",
+      targetEntity: "Item",
+      entityId: item._id,
+      description: `Added new food item "${name}" (Price: ₹${price}, Stock: ${stock})`,
+      status: "success"
+    });
+
     return res.status(201).json(shop);
   } catch (error) {
     return res.status(500).json({ message: `add item error ${error}` });
@@ -128,13 +138,27 @@ export const editItem = async (req, res) => {
     // if (expiryMinutes !== undefined) updateData.expiresAt = expiresAt;
     if (expiryHours !== undefined) updateData.expiresAt = expiresAt;
 
+    const originalItem = await Item.findById(itemId);
+    if (!originalItem) {
+      return res.status(400).json({ message: "item not found" });
+    }
+
+    const isDiscountChanged = discount !== undefined && Number(originalItem.discount || 0) !== Number(discount || 0);
+
     const item = await Item.findByIdAndUpdate(itemId, updateData, {
       new: true,
     });
 
-    if (!item) {
-      return res.status(400).json({ message: "item not found" });
-    }
+    logActivity(req, {
+      activityType: "Food",
+      action: isDiscountChanged ? "Discount Changed" : "Food Updated",
+      targetEntity: "Item",
+      entityId: item._id,
+      description: isDiscountChanged
+        ? `Discount for "${name}" changed from ${originalItem.discount || 0}% to ${discount}%`
+        : `Food item "${name}" details updated`,
+      status: "success"
+    });
 
     const shop = await Shop.findOne({ owner: req.userId }).populate({
       path: "items",
@@ -168,12 +192,22 @@ export const deleteItem = async (req, res) => {
       return res.status(400).json({ message: "item not found" });
     }
     const shop = await Shop.findOne({ owner: req.userId });
-    shop.items = shop.items.filter((i) => i !== item._id);
+    shop.items = shop.items.filter((i) => i.toString() !== item._id.toString());
     await shop.save();
     await shop.populate({
       path: "items",
       options: { sort: { updatedAt: -1 } },
     });
+
+    logActivity(req, {
+      activityType: "Food",
+      action: "Food Deleted",
+      targetEntity: "Item",
+      entityId: item._id,
+      description: `Deleted food item "${item.name}" from inventory`,
+      status: "success"
+    });
+
     return res.status(200).json(shop);
   } catch (error) {
     return res.status(500).json({ message: `delete item error ${error}` });

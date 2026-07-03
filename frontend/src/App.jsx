@@ -21,6 +21,8 @@ import useGetMyOrders from "./hooks/useGetMyOrders";
 import useUpdateLocation from "./hooks/useUpdateLocation";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import Shop from "./pages/Shop";
+import PaymentPage from "./pages/PaymentPage";
+import AdminDashboard from "./pages/AdminDashboard";
 import { useEffect } from "react";
 import { io } from "socket.io-client";
 import { setSocket } from "./redux/userSlice";
@@ -29,7 +31,7 @@ import { setSocket } from "./redux/userSlice";
 export const serverUrl = import.meta.env.VITE_API_URL;
 
 function App() {
-  const { userData } = useSelector((state) => state.user);
+  const { userData, isLoading, socket } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   useGetCurrentUser();
   useUpdateLocation();
@@ -39,39 +41,48 @@ function App() {
   useGetItemsByCity();
   useGetMyOrders();
 
+  // Create socket once on app mount
   useEffect(() => {
     const socketInstance = io(serverUrl, { withCredentials: true });
     dispatch(setSocket(socketInstance));
-    socketInstance.on("connect", () => {
-      if (userData) {
-        socketInstance.emit("identity", { userId: userData._id });
-      }
-    });
     return () => {
       socketInstance.disconnect();
     };
-  }, [userData?._id]);
+  }, [dispatch]);
 
-  // useEffect(() => {
-  //   const socketInstance = io(serverUrl, { withCredentials: true });
+  // Handle identity mapping and connection/reconnection events
+  useEffect(() => {
+    if (!socket || !userData?._id) return;
 
-  //   dispatch(setSocket(socketInstance));
+    const handleConnect = () => {
+      socket.emit("identity", { userId: userData._id });
+    };
 
-  //   socketInstance.on("connect", () => {
-  //     console.log("Socket connected:", socketInstance.id);
-  //   });
+    if (socket.connected) {
+      handleConnect();
+    }
 
-  //   if (userData?._id) {
-  //     socketInstance.emit("identity", {
-  //       userId: userData._id
-  //     });
-  //   }
+    socket.on("connect", handleConnect);
+    return () => {
+      socket.off("connect", handleConnect);
+    };
+  }, [socket, userData?._id]);
 
-  //   return () => {
-  //     socketInstance.disconnect();
-  //   };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#FAFAFA]">
+        <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center text-2xl animate-bounce shadow-md">
+          🥑
+        </div>
+        <h1 className="text-xl font-extrabold text-orange-500 mt-4 tracking-wider animate-pulse">
+          Rebite Loading...
+        </h1>
+      </div>
+    );
+  }
 
-  // }, [userData?._id]);
+  const isOwnerOrAdmin = userData && (userData.role === "owner" || userData.role === "superAdmin");
+  const isCustomer = userData && userData.role === "user";
 
   return (
     <Routes>
@@ -93,27 +104,27 @@ function App() {
       />
       <Route
         path="/create-edit-shop"
-        element={userData ? <CreateEditShop /> : <Navigate to={"/signin"} />}
+        element={isOwnerOrAdmin ? <CreateEditShop /> : <Navigate to={userData ? "/" : "/signin"} />}
       />
       <Route
         path="/add-item"
-        element={userData ? <AddItem /> : <Navigate to={"/signin"} />}
+        element={isOwnerOrAdmin ? <AddItem /> : <Navigate to={userData ? "/" : "/signin"} />}
       />
       <Route
         path="/edit-item/:itemId"
-        element={userData ? <EditItem /> : <Navigate to={"/signin"} />}
+        element={isOwnerOrAdmin ? <EditItem /> : <Navigate to={userData ? "/" : "/signin"} />}
       />
       <Route
         path="/cart"
-        element={userData ? <CartPage /> : <Navigate to={"/signin"} />}
+        element={isCustomer ? <CartPage /> : <Navigate to={userData ? "/" : "/signin"} />}
       />
       <Route
         path="/checkout"
-        element={userData ? <CheckOut /> : <Navigate to={"/signin"} />}
+        element={isCustomer ? <CheckOut /> : <Navigate to={userData ? "/" : "/signin"} />}
       />
       <Route
         path="/order-placed"
-        element={userData ? <OrderPlaced /> : <Navigate to={"/signin"} />}
+        element={isCustomer ? <OrderPlaced /> : <Navigate to={userData ? "/" : "/signin"} />}
       />
       <Route
         path="/my-orders"
@@ -126,6 +137,14 @@ function App() {
       <Route
         path="/shop/:shopId"
         element={userData ? <Shop /> : <Navigate to={"/signin"} />}
+      />
+      <Route
+        path="/payment/:orderId"
+        element={isCustomer ? <PaymentPage /> : <Navigate to={userData ? "/" : "/signin"} />}
+      />
+      <Route
+        path="/admin"
+        element={userData && userData.role === "superAdmin" ? <AdminDashboard /> : <Navigate to={"/"} />}
       />
     </Routes>
   );

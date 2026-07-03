@@ -127,24 +127,39 @@ function UserOrderCard({ data }) {
     } catch (error) {
       console.log(error);
     }
+    
+  };
+    const getStatusPillClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-50 text-yellow-700 border-yellow-250";
+      case "accepted":
+      case "delivered":
+      case "completed":
+        return "bg-green-50 text-green-700 border-green-250";
+      case "cancelled":
+        return "bg-gray-100 text-gray-500 border-gray-250";
+      default: // pickedUp, outForDelivery, etc.
+        return "bg-orange-50 text-orange-700 border-orange-250";
+    }
   };
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-lg border border-gray-100
-      p-5 space-y-5 hover:shadow-xl transition"
+      className="bg-white rounded-3xl border border-gray-200
+      p-6 space-y-6 shadow-sm hover:shadow-md transition"
     >
 
       {/* ================= ORDER HEADER ================= */}
 
-      <div className="flex justify-between border-b pb-3">
+      <div className="flex justify-between items-start border-b pb-3">
 
         <div>
-          <p className="font-bold text-gray-800">
+          <p className="font-extrabold text-gray-900">
             Order #{data._id.slice(-6)}
           </p>
 
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-400 mt-0.5">
             Date: {formatDate(data.createdAt)}
           </p>
         </div>
@@ -152,18 +167,20 @@ function UserOrderCard({ data }) {
         <div className="text-right">
 
           {data.paymentMethod === "cod" ? (
-            <p className="text-sm text-gray-500 uppercase">
+            <p className="text-xs text-gray-400 font-bold uppercase">
               {data.paymentMethod}
             </p>
           ) : (
-            <p className="text-sm text-gray-500 font-semibold">
-              Payment: {data.payment ? "Paid" : "Pending"}
+            <p className="text-xs text-gray-500 font-semibold">
+              Payment: <span className={data.payment ? "text-green-600 font-bold" : "text-yellow-600 font-bold"}>{data.payment ? "Paid" : "Pending"}</span>
             </p>
           )}
 
-          <p className="text-sm font-semibold text-blue-600 capitalize">
-            {data.shopOrders?.[0].status}
-          </p>
+          <div className="mt-1">
+            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded border ${getStatusPillClass(data.shopOrders?.[0]?.status)}`}>
+              {data.shopOrders?.[0]?.status}
+            </span>
+          </div>
 
         </div>
 
@@ -174,12 +191,12 @@ function UserOrderCard({ data }) {
       {data.shopOrders.map((shopOrder, index) => (
         <div
           key={index}
-          className="border border-orange-100 rounded-xl
-          p-4 bg-orange-50 space-y-4"
+          className="border border-gray-200 rounded-2xl
+          p-4 bg-gray-50/50 space-y-4"
         >
 
           {/* Shop Name */}
-          <p className="font-semibold text-gray-800">
+          <p className="font-bold text-sm text-gray-800">
             {shopOrder.shop.name}
           </p>
 
@@ -188,63 +205,63 @@ function UserOrderCard({ data }) {
 
             {shopOrder.shopOrderItems.map((item, index) => {
 
-  if (!item?.item) return null;
+              if (!item?.item) return null;
 
-  return (
-    <div
-      key={index}
-      className="shrink-0 w-40 bg-white border border-gray-100
-      rounded-xl shadow-sm p-2 hover:shadow-md transition"
-    >
+              return (
+                <div
+                  key={index}
+                  className="shrink-0 w-40 bg-white border border-gray-200
+                  rounded-2xl p-2.5 hover:shadow-sm transition"
+                >
 
-      <img
-        src={item.item?.image || "/no-image.png"}
-        alt=""
-        className="w-full h-24 object-cover rounded-lg"
-      />
+                  <img
+                    src={item.item?.image || "/no-image.png"}
+                    alt=""
+                    className="w-full h-20 object-cover rounded-xl"
+                  />
 
-      <p className="text-sm font-semibold mt-2">
-        {item.name}
-      </p>
+                  <p className="text-xs font-bold text-gray-900 mt-2 truncate">
+                    {item.name}
+                  </p>
 
-      <p className="text-xs text-gray-500">
-        Qty: {item.quantity} × ₹{item.price}
-      </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    Qty: {item.quantity} × ₹{item.price}
+                  </p>
 
-      {shopOrder.status === "delivered" && item.item?._id && (
-        <div className="flex gap-1 mt-2">
-          {[1,2,3,4,5].map((star) => (
-            <button
-              key={star}
-              className={`text-lg ${
-                selectedRating[item.item._id] >= star
-                  ? "text-yellow-400"
-                  : "text-gray-300"
-              }`}
-              onClick={() =>
-                handleRating(item.item._id, star)
-              }
-            >
-              ★
-            </button>
-          ))}
-        </div>
-      )}
+                  {shopOrder.status === "delivered" && item.item?._id && (
+                    <div className="flex gap-1 mt-2">
+                      {[1,2,3,4,5].map((star) => (
+                        <button
+                          key={star}
+                          className={`text-base cursor-pointer ${
+                            selectedRating[item.item._id] >= star
+                              ? "text-yellow-450"
+                              : "text-gray-300 hover:text-yellow-300"
+                          }`}
+                          onClick={() =>
+                            handleRating(item.item._id, star)
+                          }
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
-    </div>
-  );
+                </div>
+              );
 
-})}
+            })}
           </div>
 
           {/* Subtotal */}
-          <div className="flex justify-between items-center border-t pt-2">
+          <div className="flex justify-between items-center border-t border-gray-200/60 pt-2">
 
-            <p className="font-semibold text-gray-700">
+            <p className="font-bold text-xs text-gray-700">
               Subtotal: ₹{shopOrder.subtotal}
             </p>
 
-            <span className="text-sm font-semibold text-blue-600 capitalize">
+            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${getStatusPillClass(shopOrder.status)}`}>
               {shopOrder.status}
             </span>
 
@@ -255,15 +272,15 @@ function UserOrderCard({ data }) {
 
       {/* ================= TOTAL + TRACK ================= */}
 
-      <div className="flex justify-between items-center border-t pt-3">
+      <div className="flex justify-between items-center border-t border-gray-200/60 pt-3">
 
-        <p className="font-bold text-gray-800 text-lg">
-          Total: ₹{data.totalAmount}
+        <p className="font-extrabold text-gray-950 text-base">
+          Total: <span className="text-orange-500">₹{data.totalAmount}</span>
         </p>
 
         <button
           className="bg-orange-500 hover:bg-orange-600 text-white
-          px-4 py-2 rounded-lg text-sm font-medium transition"
+          px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition hover:scale-102 cursor-pointer"
           onClick={() => navigate(`/track-order/${data._id}`)}
         >
           Track Order

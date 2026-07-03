@@ -138,8 +138,8 @@ function FloatingInput({
         className={`w-full px-4 pt-5 pb-2 text-sm rounded-xl outline-none transition-all duration-300 border backdrop-blur-sm
         ${
           darkMode
-            ? "bg-slate-800 text-white border-slate-600 focus:ring-2 focus:ring-green-400"
-            : "bg-white/80 text-gray-800 border-gray-300 focus:ring-2 focus:ring-green-500"
+            ? "bg-slate-800 text-white border-slate-600 focus:ring-2 focus:ring-orange-400"
+            : "bg-white/80 text-gray-850 border-gray-300 focus:ring-2 focus:ring-orange-500"
         }`}
         required
       />
@@ -148,7 +148,7 @@ function FloatingInput({
         className={`absolute left-4 transition-all duration-300 pointer-events-none
         ${
           focused || value
-            ? "top-1 text-xs text-green-500"
+            ? "top-1 text-xs text-orange-500 font-semibold"
             : darkMode
             ? "top-3.5 text-sm text-gray-400"
             : "top-3.5 text-sm text-gray-500"
@@ -160,7 +160,7 @@ function FloatingInput({
       {isPassword && (
         <button
           type="button"
-          className="absolute right-3 top-4 text-gray-500"
+          className="absolute right-3 top-4 text-gray-400 hover:text-gray-600 transition"
           onClick={togglePassword}
         >
           {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
@@ -227,7 +227,7 @@ function SignIn() {
       className={`min-h-screen w-full flex items-center justify-center relative overflow-hidden transition-all duration-700 ${
         darkMode
           ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
-          : "bg-gradient-to-br from-[#F6F1E7] via-[#f4efe5] to-[#e8f5ec]"
+          : "bg-[#FAFAFA]"
       }`}
     >
       {/* ===== Floating Food Icons (5 items) ===== */}
@@ -239,7 +239,7 @@ function SignIn() {
             duration: 6 + index,
             repeat: Infinity,
           }}
-          className="absolute text-5xl opacity-20"
+          className="absolute text-5xl opacity-15"
           style={{
             top: `${10 + index * 15}%`,
             left: `${5 + index * 18}%`,
@@ -252,7 +252,7 @@ function SignIn() {
       {/* Dark Mode Toggle */}
       <button
         onClick={() => setDarkMode(!darkMode)}
-        className="absolute top-6 right-6 text-xl p-3 rounded-full bg-white/30 backdrop-blur-md border border-white/40"
+        className="absolute top-6 right-6 text-xl p-3 rounded-full bg-white/30 backdrop-blur-md border border-white/40 cursor-pointer text-gray-700"
       >
         {darkMode ? <FaSun /> : <FaMoon />}
       </button>
@@ -265,20 +265,20 @@ function SignIn() {
           repeat: swing ? Infinity : 0,
           ease: "easeInOut",
         }}
-        className="p-[2px] rounded-3xl bg-gradient-to-r from-green-400 via-emerald-500 to-teal-400"
+        className="p-[1px] rounded-3xl bg-gray-200"
       >
         <div
-          className={`w-full max-w-md p-10 rounded-3xl shadow-2xl backdrop-blur-xl ${
+          className={`w-full max-w-md p-10 rounded-3xl shadow-sm backdrop-blur-xl ${
             darkMode
               ? "bg-slate-900/85 text-white"
-              : "bg-white/80 border border-white/50"
+              : "bg-white border border-gray-150"
           }`}
         >
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-green-700 flex items-center justify-center text-2xl shadow-lg">
+            <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center text-2xl shadow-sm">
               🥑
             </div>
-            <h1 className="text-3xl font-semibold text-green-600 mt-4">
+            <h1 className="text-3xl font-extrabold text-orange-500 mt-4">
               Rebite
             </h1>
             <p className="text-sm mt-2 text-gray-500">
@@ -307,7 +307,7 @@ function SignIn() {
           />
 
           <div
-            className="text-right mb-6 cursor-pointer text-green-600 text-sm hover:underline"
+            className="text-right mb-6 cursor-pointer text-orange-500 font-semibold text-sm hover:underline"
             onClick={() => navigate("/forgot-password")}
           >
             Forgot Password?
@@ -316,13 +316,13 @@ function SignIn() {
           <button
             onClick={handleSignIn}
             disabled={loading}
-            className="w-full py-3 rounded-2xl bg-green-700 text-white hover:bg-green-800 transition"
+            className="w-full py-3 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition font-bold uppercase tracking-wider text-sm cursor-pointer"
           >
-            {loading ? <ClipLoader size={20} color="white" /> : "Sign In 🌱"}
+            {loading ? <ClipLoader size={20} color="white" /> : "Sign In"}
           </button>
 
           {err && (
-            <p className="text-red-500 text-center mt-4 text-sm">
+            <p className="text-red-500 text-center mt-4 text-sm font-semibold">
               *{err}
             </p>
           )}
@@ -330,11 +330,11 @@ function SignIn() {
           {/* FIXED GOOGLE BUTTON FOR DARK MODE */}
           <button
             onClick={handleGoogleAuth}
-            className={`w-full mt-5 flex items-center justify-center gap-3 rounded-2xl px-4 py-3 transition text-sm
+            className={`w-full mt-5 flex items-center justify-center gap-3 rounded-xl px-4 py-3 transition text-sm font-semibold cursor-pointer
             ${
               darkMode
                 ? "bg-white text-black hover:bg-gray-200"
-                : "bg-white border border-gray-300 hover:bg-gray-100 text-black"
+                : "bg-white border border-gray-300 hover:bg-gray-50 text-gray-800"
             }`}
           >
             <FcGoogle size={20} />
@@ -342,11 +342,11 @@ function SignIn() {
           </button>
 
           <p
-            className="text-center mt-6 text-sm cursor-pointer"
+            className="text-center mt-6 text-sm cursor-pointer text-gray-500"
             onClick={() => navigate("/signup")}
           >
             New here?{" "}
-            <span className="text-green-600 font-semibold">
+            <span className="text-orange-500 font-semibold">
               Create account
             </span>
           </p>

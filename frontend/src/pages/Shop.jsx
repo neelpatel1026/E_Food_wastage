@@ -96,21 +96,20 @@ function Shop() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br
-      from-orange-50 via-rose-50 to-pink-50"
+      className="min-h-screen bg-[#FAFAFA]"
     >
 
       {/* Back Button */}
 
       <button
         className="fixed top-5 left-5 z-20 flex items-center gap-2
-        bg-white shadow-md border border-gray-100
+        bg-white shadow-sm border border-gray-200
         px-4 py-2 rounded-full
-        hover:shadow-lg transition"
+        hover:shadow-md transition cursor-pointer"
         onClick={() => navigate("/")}
       >
         <FaArrowLeft className="text-orange-500" />
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-semibold text-gray-700">
           Back
         </span>
       </button>

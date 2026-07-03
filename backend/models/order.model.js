@@ -79,10 +79,26 @@ const orderSchema = new mongoose.Schema({
         type:String,
         default:""
     },
-   razorpayPaymentId:{
-    type:String,
-       default:""
-   }
+    razorpayPaymentId:{
+        type:String,
+        default:""
+    },
+    paymentStatus: {
+        type: String,
+        enum: ["Pending", "Under Verification", "Verified", "Rejected", "Refunded"],
+        default: "Pending"
+    },
+    paymentScreenshot: {
+        type: String,
+        default: ""
+    },
+    paymentUTR: {
+        type: String,
+        default: ""
+    },
+    paymentTime: {
+        type: Date
+    }
 }, { timestamps: true })
 
 const Order=mongoose.model("Order",orderSchema)

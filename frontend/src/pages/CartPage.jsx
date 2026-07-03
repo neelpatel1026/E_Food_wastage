@@ -53,8 +53,7 @@ function CartPage() {
 
   return (
     <div
-      className="min-h-screen flex justify-center px-6 py-10
-      bg-gradient-to-br from-orange-50 via-rose-50 to-pink-50"
+      className="min-h-screen flex justify-center px-6 py-10 bg-[#FAFAFA]"
     >
       <div className="w-full max-w-3xl">
 
@@ -62,14 +61,14 @@ function CartPage() {
         <div className="flex items-center gap-4 mb-8">
 
           <div
-            className="p-2 rounded-full bg-white shadow-md
-            hover:scale-110 transition cursor-pointer"
+            className="p-2 rounded-full bg-white shadow-sm border border-gray-200
+            hover:scale-105 transition cursor-pointer"
             onClick={() => navigate("/")}
           >
             <IoIosArrowRoundBack size={32} className="text-orange-500" />
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-extrabold text-gray-900">
             Your Cart
           </h1>
         </div>
@@ -77,22 +76,19 @@ function CartPage() {
         {/* Empty Cart */}
         {cartItems?.length === 0 ? (
           <div
-            className="bg-white shadow-xl rounded-2xl p-10
+            className="bg-white shadow-sm rounded-3xl p-10
             flex flex-col items-center justify-center
-            text-center border border-gray-100"
+            text-center border border-gray-200"
           >
-            <p className="text-gray-500 text-lg mb-4">
+            <p className="text-gray-500 text-base mb-6 font-medium">
               Your Cart is Empty
             </p>
 
             <button
-              className="bg-gradient-to-r from-orange-500 to-red-500
-              text-white px-6 py-3 rounded-full
-              font-medium shadow-lg
-              hover:scale-105 transition"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold transition shadow-sm"
               onClick={() => navigate("/")}
             >
-              Explore Food
+              Explore Food Menu
             </button>
           </div>
         ) : (
@@ -106,32 +102,45 @@ function CartPage() {
 
             {/* Total Amount */}
             <div
-              className="mt-8 bg-white shadow-xl rounded-2xl
+              className="mt-8 bg-white shadow-sm rounded-2xl
               p-5 flex justify-between items-center
-              border border-gray-100"
+              border border-gray-200"
             >
-              <h2 className="text-lg font-semibold text-gray-700">
+              <h2 className="text-base font-semibold text-gray-700">
                 Total Amount
               </h2>
 
-              <span className="text-2xl font-bold text-orange-500">
+              <span className="text-2xl font-extrabold text-orange-500">
                 ₹{totalAmount}
               </span>
             </div>
 
             {/* Checkout Button */}
-            <div className="mt-6 flex justify-end">
-              <button
-                className="bg-gradient-to-r from-orange-500 to-red-500
-                text-white px-8 py-3 rounded-full
-                text-lg font-medium shadow-lg
-                hover:scale-105 hover:shadow-xl
-                transition cursor-pointer"
-                onClick={() => navigate("/checkout")}
-              >
-                Proceed to Checkout
-              </button>
-            </div>
+            {(() => {
+              const hasExpiredItems = cartItems?.some(
+                (item) => item.isExpired || (item.expiresAt && new Date(item.expiresAt).getTime() <= Date.now())
+              );
+              return (
+                <div className="mt-6 flex flex-col items-end gap-3">
+                  {hasExpiredItems && (
+                    <span className="text-red-600 text-xs font-bold bg-red-50 border border-red-100 px-4 py-2 rounded-xl">
+                      ⚠️ Some items in your cart have expired. Please remove them before checkout.
+                    </span>
+                  )}
+                  <button
+                    disabled={hasExpiredItems}
+                    className={`px-8 py-3.5 rounded-xl text-base font-bold uppercase tracking-wider shadow-sm transition ${
+                      hasExpiredItems
+                        ? "bg-gray-150 text-gray-400 cursor-not-allowed border border-gray-200"
+                        : "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
+                    }`}
+                    onClick={() => navigate("/checkout")}
+                  >
+                    Proceed to Checkout
+                  </button>
+                </div>
+              );
+            })()}
           </>
         )}
       </div>

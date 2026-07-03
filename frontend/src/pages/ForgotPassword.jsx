@@ -41,7 +41,8 @@ const [loading,setLoading]=useState(false)
   }
   const handleResetPassword=async () => {
     if(newPassword!=confirmPassword){
-      return null
+      setErr("Passwords do not match")
+      return
     }
     setLoading(true)
     try {
@@ -56,52 +57,55 @@ const [loading,setLoading]=useState(false)
     }
   }
   return (
-    <div className='flex w-full items-center justify-center min-h-screen p-4 bg-[#fff9f6]'>
-      <div className='bg-white rounded-xl shadow-lg w-full max-w-md p-8'>
-        <div className='flex items-center  gap-4 mb-4'>
-          <IoIosArrowRoundBack size={30} className='text-[#ff4d2d] cursor-pointer' onClick={()=>navigate("/signin")}/>
-          <h1 className='text-2xl font-bold text-center text-[#ff4d2d]'>Forgot Password</h1>
+    <div className='flex w-full items-center justify-center min-h-screen p-4 bg-[#FAFAFA]'>
+      <div className='bg-white border border-gray-200 rounded-3xl shadow-sm w-full max-w-md p-8'>
+        <div className='flex items-center gap-4 mb-6'>
+          <div className="p-1 hover:bg-gray-50 border border-gray-200 rounded-full cursor-pointer transition shrink-0" onClick={()=>navigate("/signin")}>
+            <IoIosArrowRoundBack size={26} className='text-orange-500'/>
+          </div>
+          <h1 className='text-xl font-extrabold text-gray-900'>Reset Password</h1>
         </div>
         {step == 1
           &&
           <div>
- <div className='mb-6'>
-                    <label htmlFor="email" className='block text-gray-700 font-medium mb-1'>Email</label>
-                    <input type="email" className='w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none  ' placeholder='Enter your Email' onChange={(e)=>setEmail(e.target.value)} value={email} required/>
-                </div>
-                <button className={`w-full font-semibold py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer`} onClick={handleSendOtp} disabled={loading}>
-                {loading?<ClipLoader size={20} color='white'/>:"Send Otp"}
+            <div className='mb-6'>
+              <label htmlFor="email" className='block text-sm font-semibold text-gray-700 mb-2'>Email Address</label>
+              <input type="email" className='w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm text-gray-800' placeholder='Enter your Email' onChange={(e)=>setEmail(e.target.value)} value={email} required/>
+            </div>
+            <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold uppercase tracking-wider text-sm shadow-sm transition hover:scale-[1.01] cursor-pointer" onClick={handleSendOtp} disabled={loading}>
+              {loading?<ClipLoader size={20} color='white'/>:"Send OTP"}
             </button>
-                 {err && <p className='text-red-500 text-center my-2.5'>*{err}</p>}
+            {err && <p className='text-red-500 text-center mt-4 text-sm font-semibold'>*{err}</p>}
           </div>}
 
          {step == 2
           &&
           <div>
- <div className='mb-6'>
-                    <label htmlFor="email" className='block text-gray-700 font-medium mb-1'>OTP</label>
-                    <input type="email" className='w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none  ' placeholder='Enter OTP' onChange={(e)=>setOtp(e.target.value)} value={otp} required/>
-                </div>
-                <button className={`w-full font-semibold py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer`} onClick={handleVerifyOtp} disabled={loading}>
-                {loading?<ClipLoader size={20} color='white'/>:"Verify"}
+            <div className='mb-6'>
+              <label htmlFor="otp" className='block text-sm font-semibold text-gray-700 mb-2'>Verification Code</label>
+              <input type="text" className='w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm text-gray-800' placeholder='Enter OTP' onChange={(e)=>setOtp(e.target.value)} value={otp} required/>
+            </div>
+            <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold uppercase tracking-wider text-sm shadow-sm transition hover:scale-[1.01] cursor-pointer" onClick={handleVerifyOtp} disabled={loading}>
+              {loading?<ClipLoader size={20} color='white'/>:"Verify Code"}
             </button>
-                {err && <p className='text-red-500 text-center my-2.5'>*{err}</p>}
+            {err && <p className='text-red-500 text-center mt-4 text-sm font-semibold'>*{err}</p>}
           </div>}
+
           {step == 3
           &&
           <div>
- <div className='mb-6'>
-                    <label htmlFor="newPassword" className='block text-gray-700 font-medium mb-1'>New Password</label>
-                    <input type="email" className='w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none  ' placeholder='Enter New Password' onChange={(e)=>setNewPassword(e.target.value)} value={newPassword}/>
-                </div>
-                <div className='mb-6'>
-                    <label htmlFor="ConfirmPassword" className='block text-gray-700 font-medium mb-1'>Confirm Password</label>
-                    <input type="email" className='w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none  ' placeholder='Confirm Password' onChange={(e)=>setConfirmPassword(e.target.value)} value={confirmPassword} required/>
-                </div>
-                <button className={`w-full font-semibold py-2 rounded-lg transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer`} onClick={handleResetPassword} disabled={loading}>
-                {loading?<ClipLoader size={20} color='white'/>:"Reset Password"}
+            <div className='mb-4'>
+              <label htmlFor="newPassword" className='block text-sm font-semibold text-gray-700 mb-2'>New Password</label>
+              <input type="password" className='w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm text-gray-800' placeholder='Enter New Password' onChange={(e)=>setNewPassword(e.target.value)} value={newPassword}/>
+            </div>
+            <div className='mb-6'>
+              <label htmlFor="ConfirmPassword" className='block text-sm font-semibold text-gray-700 mb-2'>Confirm Password</label>
+              <input type="password" className='w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm text-gray-800' placeholder='Confirm Password' onChange={(e)=>setConfirmPassword(e.target.value)} value={confirmPassword} required/>
+            </div>
+            <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-bold uppercase tracking-wider text-sm shadow-sm transition hover:scale-[1.01] cursor-pointer" onClick={handleResetPassword} disabled={loading}>
+              {loading?<ClipLoader size={20} color='white'/>:"Reset Password"}
             </button>
-                {err && <p className='text-red-500 text-center my-2.5'>*{err}</p>}
+            {err && <p className='text-red-500 text-center mt-4 text-sm font-semibold'>*{err}</p>}
           </div>}
       </div>
     </div>

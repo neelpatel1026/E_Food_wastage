@@ -26,44 +26,54 @@ function OwnerItemCard({ data }) {
   } = data;
 
   const [timeLeft, setTimeLeft] = useState("");
+  const [localExpired, setLocalExpired] = useState(false);
 
   /* ================= COUNTDOWN ================= */
   useEffect(() => {
     if (!expiresAt) return;
 
-    const interval = setInterval(() => {
+    const updateTimer = () => {
       const now = new Date().getTime();
       const distance = new Date(expiresAt).getTime() - now;
 
-      // if (distance <= 0) {
-      //   setTimeLeft("Expired");
-      //   clearInterval(interval);
-      // } else {
-      //   // const minutes = Math.floor((distance / 1000 / 60) % 60);
-      //   // const seconds = Math.floor((distance / 1000) % 60);
-      //   const hours = Math.floor(distance / (1000 * 60 * 60));
-      //   const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-
-      //   setTimeLeft(`${hours}h ${minutes}m`);
-      //   setTimeLeft(`${minutes}m ${seconds}s`);
-      // }
-
       if (distance <= 0) {
         setTimeLeft("Expired");
+        setLocalExpired(true);
       } else {
-        const hours = Math.floor(distance / (1000 * 60 * 60));
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-        if (hours > 0) {
-          setTimeLeft(`${hours}h ${minutes}m`);
+        let timeText = "";
+        if (days > 0) {
+          timeText = `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m`;
+        } else if (hours > 0) {
+          timeText = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+        } else if (minutes > 0) {
+          timeText = `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
         } else {
-          setTimeLeft(`${minutes}m`);
+          timeText = `${seconds}s`;
         }
-      }
-    }, 1000);
 
+        const totalMinutes = Math.floor(distance / (1000 * 60));
+        if (totalMinutes < 15) {
+          setTimeLeft(`🔥 Almost Expired (${timeText})`);
+        } else if (totalMinutes < 60) {
+          setTimeLeft(`⚠️ Hurry! Only ${totalMinutes} minutes left`);
+        } else {
+          setTimeLeft(`⏳ Expires In ${timeText}`);
+        }
+        setLocalExpired(false);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);
+
+  const activeExpired = isExpired || localExpired;
 
   /* ================= DELETE ================= */
   const handleDelete = async () => {
@@ -80,40 +90,41 @@ function OwnerItemCard({ data }) {
 
   return (
     <div
-      className="relative flex bg-white rounded-2xl shadow-lg overflow-hidden
-      border border-gray-100 w-full max-w-3xl transition
-      hover:shadow-2xl hover:scale-[1.01]"
+      className={`relative flex bg-white rounded-2xl shadow-sm overflow-hidden
+      border border-gray-200 w-full max-w-3xl transition-all duration-300 ${
+        activeExpired ? "opacity-70 border-gray-300" : "hover:shadow-md"
+      }`}
     >
       {/* Discount Badge */}
-      {discount > 0 && !isExpired && (
+      {discount > 0 && !activeExpired && (
         <div
-          className="absolute top-3 left-3 bg-red-500 text-white text-xs
-          px-3 py-1 rounded-full font-semibold shadow-md"
+          className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-black uppercase
+          px-2.5 py-1 rounded-lg shadow-sm z-10"
         >
           🔥 {discount}% OFF
         </div>
       )}
 
       {/* Expired Overlay */}
-      {isExpired && (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10 backdrop-blur-sm">
-          <span className="text-white font-bold text-lg tracking-wide">
+      {activeExpired && (
+        <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center z-10 backdrop-blur-[1px]">
+          <span className="text-white font-black text-sm uppercase tracking-widest border-2 border-white px-3 py-1 rounded-md">
             EXPIRED
           </span>
         </div>
       )}
 
       {/* Image */}
-      <div className="w-40 h-36 shrink-0 relative">
+      <div className="w-40 h-36 shrink-0 relative bg-gray-50 border-r border-gray-100">
         <img src={image} alt={name} className="w-full h-full object-cover" />
 
         {/* Veg / Non Veg Badge */}
         <div
-          className={`absolute bottom-2 left-2 text-xs px-2 py-1 rounded-full font-semibold
+          className={`absolute bottom-2 left-2 text-[9px] font-black uppercase px-2 py-0.5 rounded border
           ${
             foodType === "veg"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-600"
+              ? "bg-green-50 text-green-700 border-green-100"
+              : "bg-red-50 text-red-650 border-red-100"
           }`}
         >
           {foodType}
@@ -121,37 +132,35 @@ function OwnerItemCard({ data }) {
       </div>
 
       {/* Content */}
-      <div className="flex flex-col justify-between p-4 flex-1">
+      <div className="flex flex-col justify-between p-5 flex-1 bg-white">
         {/* Top Info */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-1">{name}</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">{name}</h2>
 
-          <p className="text-sm text-gray-500">
-            <span className="font-medium text-gray-700">Category:</span>{" "}
+          <p className="text-xs text-gray-500">
+            <span className="font-semibold text-gray-700">Category:</span>{" "}
             {category}
           </p>
 
-          <p className="text-sm text-gray-500">
-            <span className="font-medium text-gray-700">Stock:</span> {stock}
+          <p className="text-xs text-gray-500 mt-0.5">
+            <span className="font-semibold text-gray-700">Stock:</span> {stock} units
           </p>
 
           {/* Expiry Box */}
           {expiresAt && (
             <div
-              className={`mt-3 px-3 py-1.5 rounded-full text-xs font-medium w-fit
+              className={`mt-3 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase border w-fit
               ${
-                isExpired
-                  ? "bg-red-100 text-red-600"
-                  : discount > 0
-                    ? "bg-orange-100 text-orange-600"
-                    : "bg-green-100 text-green-600"
+                activeExpired
+                  ? "bg-red-50 text-red-600 border-red-100"
+                  : timeLeft.includes("⚠️")
+                    ? "bg-orange-50 text-orange-600 border-orange-200"
+                    : timeLeft.includes("🔥")
+                      ? "bg-red-50 text-red-600 border-red-200 animate-pulse"
+                      : "bg-blue-50 text-blue-605 border-blue-100"
               }`}
             >
-              {isExpired
-                ? "Expired"
-                : discount > 0
-                  ? `Expiring Soon ⏳ ${timeLeft}`
-                  : `Fresh 🟢 ${timeLeft}`}
+              {timeLeft}
             </div>
           )}
         </div>
@@ -160,41 +169,38 @@ function OwnerItemCard({ data }) {
         <div className="flex items-center justify-between mt-4">
           {/* Price */}
           <div className="text-lg font-bold">
-            {discount > 0 && !isExpired ? (
-              <div className="flex items-center gap-2">
-                <span className="line-through text-gray-400 text-sm">
-                  {/* ₹{price} */}₹{formatPrice(price)}
+            {discount > 0 && !activeExpired ? (
+              <div className="flex items-baseline gap-2">
+                <span className="text-red-600 font-extrabold text-lg">
+                  ₹{formatPrice(finalPrice || price * (1 - discount / 100))}
                 </span>
-
-                <span className="text-red-600 text-lg">
-                  {/* ₹{finalPrice} */}
-                  {/* ₹{formatPrice(finalPrice)} */}₹
-                  {formatPrice(finalPrice || price * (1 - discount / 100))}
+                <span className="line-through text-gray-400 text-xs font-semibold">
+                  ₹{formatPrice(price)}
                 </span>
               </div>
             ) : (
-              <span className="text-orange-600">
-                {/* ₹{price} */}₹{formatPrice(price)}
+              <span className="text-gray-900 font-extrabold text-lg">
+                ₹{formatPrice(price)}
               </span>
             )}
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
-              className="p-2 rounded-full bg-orange-50 text-orange-600
+              className="p-2 rounded-xl bg-orange-50 text-orange-600 border border-orange-100
               hover:bg-orange-100 transition cursor-pointer"
               onClick={() => navigate(`/edit-item/${_id}`)}
             >
-              <FaPen size={15} />
+              <FaPen size={13} />
             </button>
 
             <button
-              className="p-2 rounded-full bg-red-50 text-red-500
+              className="p-2 rounded-xl bg-red-50 text-red-500 border border-red-100
               hover:bg-red-100 transition cursor-pointer"
               onClick={handleDelete}
             >
-              <FaTrashAlt size={15} />
+              <FaTrashAlt size={13} />
             </button>
           </div>
         </div>

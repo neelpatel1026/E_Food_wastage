@@ -5,6 +5,7 @@ const userSlice = createSlice({
   name: "user",
   initialState: {
     userData: null,
+    isLoading: true,
     currentCity: null,
     currentState: null,
     currentAddress: null,
@@ -18,7 +19,8 @@ const userSlice = createSlice({
   },
   reducers: {
     setUserData: (state, action) => {
-      state.userData = action.payload
+      state.userData = action.payload;
+      state.isLoading = false;
     },
     setCurrentCity: (state, action) => {
       state.currentCity = action.payload
@@ -108,8 +110,12 @@ removeCartItem: (state, action) => {
       const { orderId, shopId, status } = action.payload
       const order = state.myOrders.find(o => o._id == orderId)
       if (order) {
-        if (order.shopOrders && order.shopOrders.shop._id == shopId) {
-          order.shopOrders.status = status
+        const shopOrder = order.shopOrders.find(so => {
+          const id = so.shop && typeof so.shop === "object" ? so.shop._id : so.shop;
+          return String(id) === String(shopId);
+        });
+        if (shopOrder) {
+          shopOrder.status = status;
         }
       }
     },
@@ -118,9 +124,12 @@ removeCartItem: (state, action) => {
       const { orderId, shopId, status } = action.payload
       const order = state.myOrders.find(o => o._id == orderId)
       if (order) {
-        const shopOrder = order.shopOrders.find(so => so.shop._id == shopId)
+        const shopOrder = order.shopOrders.find(so => {
+          const id = so.shop && typeof so.shop === "object" ? so.shop._id : so.shop;
+          return String(id) === String(shopId);
+        });
         if (shopOrder) {
-          shopOrder.status = status
+          shopOrder.status = status;
         }
       }
     },

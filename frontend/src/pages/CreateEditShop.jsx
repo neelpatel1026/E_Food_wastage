@@ -184,13 +184,13 @@ function CreateEditShop() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-6 py-10
-      bg-gradient-to-br from-orange-50 via-rose-50 to-pink-50 relative"
+      bg-[#FAFAFA] relative"
     >
 
       {/* Back Button */}
       <div
-        className="absolute top-6 left-6 p-2 rounded-full bg-white shadow-md
-        hover:scale-110 transition cursor-pointer"
+        className="absolute top-6 left-6 p-2 rounded-full bg-white shadow-sm border border-gray-200
+        hover:scale-105 transition cursor-pointer"
         onClick={() => navigate("/")}
       >
         <IoIosArrowRoundBack size={30} className="text-orange-500" />
@@ -198,18 +198,18 @@ function CreateEditShop() {
 
       {/* Form Card */}
       <div
-        className="w-full max-w-lg bg-white/90 backdrop-blur-lg
-        shadow-2xl rounded-3xl p-8 border border-gray-100"
+        className="w-full max-w-lg bg-white
+        shadow-sm rounded-3xl p-8 border border-gray-200"
       >
 
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
 
-          <div className="bg-orange-100 p-5 rounded-full mb-4">
-            <FaUtensils className="text-orange-500 w-12 h-12" />
+          <div className="bg-orange-50 p-5 rounded-full mb-4 border border-orange-100">
+            <FaUtensils className="text-orange-500 w-10 h-10" />
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-extrabold text-gray-900">
             {myShopData ? "Edit Shop" : "Add Shop"}
           </h1>
 
@@ -224,7 +224,7 @@ function CreateEditShop() {
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Shop Name
             </label>
 
@@ -232,8 +232,8 @@ function CreateEditShop() {
               type="text"
               placeholder="Enter Shop Name"
               className="w-full px-4 py-3 rounded-xl border border-gray-200
-              focus:outline-none focus:ring-2 focus:ring-orange-400
-              transition"
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100
+              transition text-sm text-gray-800"
               onChange={(e) => setName(e.target.value)}
               value={name}
             />
@@ -241,7 +241,7 @@ function CreateEditShop() {
 
           {/* Image */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Shop Image
             </label>
 
@@ -249,12 +249,12 @@ function CreateEditShop() {
               type="file"
               accept="image/*"
               className="w-full px-4 py-3 rounded-xl border border-gray-200
-              focus:outline-none focus:ring-2 focus:ring-orange-400"
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-500"
               onChange={handleImage}
             />
 
             {frontendImage && (
-              <div className="mt-4 overflow-hidden rounded-xl border">
+              <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
                 <img
                   src={frontendImage}
                   alt=""
@@ -268,7 +268,7 @@ function CreateEditShop() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 City
               </label>
 
@@ -276,14 +276,14 @@ function CreateEditShop() {
                 type="text"
                 placeholder="City"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200
-                focus:outline-none focus:ring-2 focus:ring-orange-400"
+                focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-800"
                 onChange={(e) => setCity(e.target.value)}
                 value={city}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 State
               </label>
 
@@ -291,7 +291,7 @@ function CreateEditShop() {
                 type="text"
                 placeholder="State"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200
-                focus:outline-none focus:ring-2 focus:ring-orange-400"
+                focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-800"
                 onChange={(e) => setState(e.target.value)}
                 value={state}
               />
@@ -301,7 +301,7 @@ function CreateEditShop() {
 
           {/* Address */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Address
             </label>
 
@@ -309,7 +309,7 @@ function CreateEditShop() {
               type="text"
               placeholder="Enter Shop Address"
               className="w-full px-4 py-3 rounded-xl border border-gray-200
-              focus:outline-none focus:ring-2 focus:ring-orange-400"
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-800"
               onChange={(e) => setAddress(e.target.value)}
               value={address}
             />
@@ -317,16 +317,15 @@ function CreateEditShop() {
 
           {/* Submit */}
           <button
-            className="w-full bg-gradient-to-r from-orange-500 to-red-500
-            text-white py-3 rounded-full font-semibold
-            shadow-lg hover:scale-[1.02] hover:shadow-xl
-            transition flex items-center justify-center"
+            className="w-full bg-orange-500 hover:bg-orange-600
+            text-white py-3 rounded-xl font-bold uppercase tracking-wider text-sm
+            shadow-sm hover:scale-[1.01] transition flex items-center justify-center cursor-pointer"
             disabled={loading}
           >
             {loading ? (
               <ClipLoader size={20} color="white" />
             ) : (
-              "Save"
+              "Save Details"
             )}
           </button>
 

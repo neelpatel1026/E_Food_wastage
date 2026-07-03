@@ -10,14 +10,32 @@ function useUpdateLocation() {
     const {userData}=useSelector(state=>state.user)
  
     useEffect(()=>{
-const updateLocation=async (lat,lon) => {
-    const result=await axios.post(`${serverUrl}/api/user/update-location`,{lat,lon},{withCredentials:true})
-    console.log(result.data)
-}
+        if (!userData) return;
+        const updateLocation=async (lat,lon) => {
+            try {
+                const result=await axios.post(`${serverUrl}/api/user/update-location`,{lat,lon},{withCredentials:true})
+                console.log(result.data)
+            } catch (error) {
+                console.log("update location error", error)
+            }
+        }
 
-navigator.geolocation.watchPosition((pos)=>{
-    updateLocation(pos.coords.latitude,pos.coords.longitude)
-})
+        if (!navigator.geolocation) {
+          console.warn("Geolocation is not supported by this browser.");
+          return;
+        }
+
+        const watchId = navigator.geolocation.watchPosition((pos)=>{
+            updateLocation(pos.coords.latitude,pos.coords.longitude)
+        }, (error) => {
+            console.log("watchPosition error", error)
+        })
+
+        return () => {
+            if (watchId !== undefined) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+        };
     },[userData])
 }
 

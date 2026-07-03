@@ -1,4 +1,3 @@
-import { count } from "console";
 import dotenv from "dotenv";
 import RazorPay from "razorpay";
 import DeliveryAssignment from "../models/deliveryAssignment.model.js";
@@ -7,6 +6,8 @@ import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import User from "../models/user.model.js";
 import { sendDeliveryOtpMail } from "../utils/mail.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
+import { logActivity } from "../utils/activityLogger.js";
 
 dotenv.config();
 let instance = new RazorPay({
@@ -16,9 +17,11 @@ let instance = new RazorPay({
 
 export const placeOrder = async (req, res) => {
   try {
+    console.log(`[placeOrder] Request body received:`, JSON.stringify(req.body, null, 2));
     const { cartItems, paymentMethod, deliveryAddress, totalAmount } = req.body;
 
     if (!cartItems || cartItems.length === 0) {
+      console.log(`[placeOrder] Validation failed: cart is empty`);
       return res.status(400).json({ message: "cart is empty" });
     }
 
@@ -27,6 +30,7 @@ export const placeOrder = async (req, res) => {
       !deliveryAddress?.latitude ||
       !deliveryAddress?.longitude
     ) {
+      console.log(`[placeOrder] Validation failed: incomplete delivery address:`, deliveryAddress);
       return res.status(400).json({ message: "send complete deliveryAddress" });
     }
 
@@ -35,10 +39,12 @@ export const placeOrder = async (req, res) => {
       const dbItem = await Item.findById(item._id);
 
       if (!dbItem) {
+        console.log(`[placeOrder] Validation failed: Item not found ${item._id}`);
         return res.status(400).json({ message: "Item not found" });
       }
 
       if (dbItem.stock < item.quantity) {
+        console.log(`[placeOrder] Validation failed: Insufficient stock for ${dbItem.name}. Stock: ${dbItem.stock}, Requested: ${item.quantity}`);
         return res.status(400).json({
           message: `${dbItem.name} has only ${dbItem.stock} items left`,
         });
@@ -49,15 +55,22 @@ export const placeOrder = async (req, res) => {
     const groupItemsByShop = {};
 
     cartItems.forEach((item) => {
-      if (!groupItemsByShop[item.shop]) {
-        groupItemsByShop[item.shop] = [];
+      const shopId = typeof item.shop === "object" && item.shop?._id ? String(item.shop._id) : String(item.shop);
+      if (!groupItemsByShop[shopId]) {
+        groupItemsByShop[shopId] = [];
       }
-      groupItemsByShop[item.shop].push(item);
+      groupItemsByShop[shopId].push(item);
     });
 
     const shopOrders = await Promise.all(
       Object.keys(groupItemsByShop).map(async (shopId) => {
         const shop = await Shop.findById(shopId).populate("owner");
+        if (!shop) {
+          throw new Error(`Shop not found for ID ${shopId}`);
+        }
+        if (!shop.owner) {
+          throw new Error(`Owner not found for Shop ID ${shopId}`);
+        }
 
         const items = groupItemsByShop[shopId];
 
@@ -82,11 +95,20 @@ export const placeOrder = async (req, res) => {
 
     /* ================= ONLINE ================= */
     if (paymentMethod === "online") {
-      const razorOrder = await instance.orders.create({
-        amount: Math.round(totalAmount * 100),
-        currency: "INR",
-        receipt: `receipt_${Date.now()}`,
-      });
+      let razorOrder = null;
+      const isRazorpayConfigured = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET;
+
+      if (isRazorpayConfigured) {
+        try {
+          razorOrder = await instance.orders.create({
+            amount: Math.round(totalAmount * 100),
+            currency: "INR",
+            receipt: `receipt_${Date.now()}`,
+          });
+        } catch (err) {
+          console.error("Razorpay order creation failed, falling back to manual payment:", err);
+        }
+      }
 
       const newOrder = await Order.create({
         user: req.userId,
@@ -94,8 +116,27 @@ export const placeOrder = async (req, res) => {
         deliveryAddress,
         totalAmount,
         shopOrders,
-        razorpayOrderId: razorOrder.id,
+        razorpayOrderId: razorOrder ? razorOrder.id : "",
         payment: false,
+        paymentStatus: "Pending",
+      });
+
+      logActivity(req, {
+        activityType: "Orders",
+        action: "Order Placed",
+        targetEntity: "Order",
+        entityId: newOrder._id,
+        description: `New online order placed for amount ₹${totalAmount}`,
+        status: "success"
+      });
+
+      logActivity(req, {
+        activityType: "Payments",
+        action: "Payment Started",
+        targetEntity: "Order",
+        entityId: newOrder._id,
+        description: `Payment initialized via online gateway for order amount ₹${totalAmount}`,
+        status: "info"
       });
 
       return res.status(200).json({
@@ -120,8 +161,18 @@ export const placeOrder = async (req, res) => {
       });
     }
 
+    logActivity(req, {
+      activityType: "Orders",
+      action: "Order Placed",
+      targetEntity: "Order",
+      entityId: newOrder._id,
+      description: `New Cash On Delivery order placed for amount ₹${totalAmount}`,
+      status: "success"
+    });
+
     return res.status(201).json(newOrder);
   } catch (error) {
+    console.error(`[placeOrder] Exception caught during order placement:`, error);
     return res.status(500).json({ message: `place order error ${error}` });
   }
 };
@@ -142,8 +193,18 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "order not found" });
     }
 
+    // Verify payment amount and order ID match
+    if (payment.amount !== Math.round(order.totalAmount * 100)) {
+      return res.status(400).json({ message: "payment amount mismatch" });
+    }
+
+    if (payment.order_id !== order.razorpayOrderId) {
+      return res.status(400).json({ message: "payment order ID mismatch" });
+    }
+
     order.payment = true;
     order.razorpayPaymentId = razorpay_payment_id;
+    order.paymentStatus = "Verified";
     await order.save();
 
     /* 🔥 Reduce stock after payment */
@@ -154,6 +215,24 @@ export const verifyPayment = async (req, res) => {
         });
       }
     }
+
+    logActivity(req, {
+      activityType: "Payments",
+      action: "Payment Completed",
+      targetEntity: "Order",
+      entityId: order._id,
+      description: `Payment captured successfully via Razorpay (ID: ${razorpay_payment_id})`,
+      status: "success"
+    });
+
+    logActivity(req, {
+      activityType: "Payments",
+      action: "Payment Verified",
+      targetEntity: "Order",
+      entityId: order._id,
+      description: `Razorpay signature verification successful for order amount ₹${order.totalAmount}`,
+      status: "success"
+    });
 
     return res.status(200).json(order);
   } catch (error) {
@@ -186,7 +265,7 @@ export const getMyOrders = async (req, res) => {
         _id: order._id,
         paymentMethod: order.paymentMethod,
         user: order.user,
-        shopOrders: order.shopOrders.find((o) => o.owner._id == req.userId),
+        shopOrders: order.shopOrders.find((o) => o.owner && String(o.owner) === String(req.userId)),
         createdAt: order.createdAt,
         deliveryAddress: order.deliveryAddress,
         payment: order.payment,
@@ -224,21 +303,45 @@ export const updateOrderStatus = async (req, res) => {
 
     /* ================= DELIVERY ASSIGNMENT ================= */
 
-    if (status === "out of delivery" && !shopOrder.assignment) {
+    if ((status === "preparing" || status === "out of delivery") && !shopOrder.assignment) {
       const { longitude, latitude } = order.deliveryAddress;
 
-      const nearByDeliveryBoys = await User.find({
-        role: "deliveryBoy",
-        location: {
-          $near: {
-            $geometry: {
-              type: "Point",
-              coordinates: [Number(longitude), Number(latitude)],
+      let nearByDeliveryBoys = [];
+      if (longitude && latitude) {
+        nearByDeliveryBoys = await User.find({
+          role: "deliveryBoy",
+          location: {
+            $near: {
+              $geometry: {
+                type: "Point",
+                coordinates: [Number(longitude), Number(latitude)],
+              },
+              $maxDistance: 5000,
             },
-            $maxDistance: 5000,
           },
-        },
-      });
+        });
+
+        // Fallback: If no delivery boys within 5km, search within 50km
+        if (nearByDeliveryBoys.length === 0) {
+          nearByDeliveryBoys = await User.find({
+            role: "deliveryBoy",
+            location: {
+              $near: {
+                $geometry: {
+                  type: "Point",
+                  coordinates: [Number(longitude), Number(latitude)],
+                },
+                $maxDistance: 50000,
+              },
+            },
+          });
+        }
+      }
+
+      // Fallback: If still no delivery boys, find all registered delivery boys
+      if (nearByDeliveryBoys.length === 0) {
+        nearByDeliveryBoys = await User.find({ role: "deliveryBoy" });
+      }
 
       const nearByIds = nearByDeliveryBoys.map((b) => b._id);
 
@@ -257,9 +360,17 @@ export const updateOrderStatus = async (req, res) => {
 
       if (candidates.length === 0) {
         await order.save();
-        return res.json({
-          message:
-            "order status updated but there is no available delivery boys",
+        const updatedShopOrder = order.shopOrders.find(
+          (o) => String(o.shop) === String(shopId),
+        );
+        await order.populate("shopOrders.shop", "name");
+        await order.populate("user", "socketId");
+        return res.status(200).json({
+          shopOrder: updatedShopOrder,
+          assignedDeliveryBoy: null,
+          availableBoys: [],
+          assignment: null,
+          message: "order status updated but there is no available delivery boys",
         });
       }
 
@@ -295,7 +406,7 @@ export const updateOrderStatus = async (req, res) => {
 
           if (boySocketId) {
             const shopOrderData = deliveryAssignment.order.shopOrders.find(
-              (so) => so._id.equals(deliveryAssignment.shopOrderId),
+              (so) => String(so._id) === String(deliveryAssignment.shopOrderId),
             );
 
             io.to(boySocketId).emit("newAssignment", {
@@ -315,6 +426,52 @@ export const updateOrderStatus = async (req, res) => {
     /* ================= SAVE ORDER ================= */
 
     await order.save();
+
+    if (status === "preparing") {
+      logActivity(req, {
+        activityType: "Orders",
+        action: "Order Prepared",
+        targetEntity: "Order",
+        entityId: order._id,
+        description: `Order ${order._id} status updated to preparing`,
+        status: "success"
+      });
+    } else if (status === "out of delivery") {
+      logActivity(req, {
+        activityType: "Delivery",
+        action: "Delivery Started",
+        targetEntity: "Order",
+        entityId: order._id,
+        description: `Delivery started for order ${order._id}`,
+        status: "success"
+      });
+    } else if (status === "delivered") {
+      logActivity(req, {
+        activityType: "Orders",
+        action: "Order Delivered",
+        targetEntity: "Order",
+        entityId: order._id,
+        description: `Order ${order._id} marked as delivered`,
+        status: "success"
+      });
+      logActivity(req, {
+        activityType: "Delivery",
+        action: "Delivery Completed",
+        targetEntity: "Order",
+        entityId: order._id,
+        description: `Delivery completed successfully for order ${order._id}`,
+        status: "success"
+      });
+    } else if (status === "cancelled") {
+      logActivity(req, {
+        activityType: "Orders",
+        action: "Order Cancelled",
+        targetEntity: "Order",
+        entityId: order._id,
+        description: `Order ${order._id} has been cancelled`,
+        status: "warning"
+      });
+    }
 
     const updatedShopOrder = order.shopOrders.find(
       (o) => String(o.shop) === String(shopId),
@@ -361,23 +518,27 @@ export const getDeliveryBoyAssignment = async (req, res) => {
   try {
     const deliveryBoyId = req.userId;
     const assignments = await DeliveryAssignment.find({
-      brodcastedTo: deliveryBoyId,
+      broadcastedTo: deliveryBoyId,
       status: "brodcasted",
     })
       .populate("order")
       .populate("shop");
 
-    const formated = assignments.map((a) => ({
-      assignmentId: a._id,
-      orderId: a.order._id,
-      shopName: a.shop.name,
-      deliveryAddress: a.order.deliveryAddress,
-      items:
-        a.order.shopOrders.find((so) => so._id.equals(a.shopOrderId))
-          .shopOrderItems || [],
-      subtotal: a.order.shopOrders.find((so) => so._id.equals(a.shopOrderId))
-        ?.subtotal,
-    }));
+    const formated = assignments
+      .filter((a) => a.order && a.shop)
+      .map((a) => {
+        const shopOrder = a.order.shopOrders.find(
+          (so) => String(so._id) === String(a.shopOrderId)
+        );
+        return {
+          assignmentId: a._id,
+          orderId: a.order._id,
+          shopName: a.shop.name,
+          deliveryAddress: a.order.deliveryAddress,
+          items: shopOrder ? shopOrder.shopOrderItems : [],
+          subtotal: shopOrder ? shopOrder.subtotal : 0,
+        };
+      });
 
     return res.status(200).json(formated);
   } catch (error) {
@@ -421,6 +582,24 @@ export const acceptOrder = async (req, res) => {
     shopOrder.assignedDeliveryBoy = req.userId;
     await order.save();
 
+    logActivity(req, {
+      activityType: "Delivery",
+      action: "Delivery Boy Accepted",
+      targetEntity: "DeliveryAssignment",
+      entityId: assignment._id,
+      description: `Delivery boy accepted order assignment ${assignment._id}`,
+      status: "success"
+    });
+
+    logActivity(req, {
+      activityType: "Orders",
+      action: "Order Accepted",
+      targetEntity: "Order",
+      entityId: order._id,
+      description: `Order ${order._id} accepted by delivery partner`,
+      status: "success"
+    });
+
     return res.status(200).json({
       message: "order accepted",
     });
@@ -439,26 +618,29 @@ export const getCurrentOrder = async (req, res) => {
       .populate("assignedTo", "fullName email mobile location")
       .populate({
         path: "order",
-        populate: [{ path: "user", select: "fullName email location mobile" }],
+        populate: [
+          { path: "user", select: "fullName email location mobile" },
+          { path: "shopOrders.shop", select: "name image" }
+        ],
       });
 
     if (!assignment) {
-      return res.status(400).json({ message: "assignment not found" });
+      return res.status(200).json(null);
     }
     if (!assignment.order) {
-      return res.status(400).json({ message: "order not found" });
+      return res.status(404).json({ message: "order not found" });
     }
 
     const shopOrder = assignment.order.shopOrders.find(
-      (so) => String(so._id) == String(assignment.shopOrderId),
+      (so) => String(so._id) === String(assignment.shopOrderId),
     );
 
     if (!shopOrder) {
-      return res.status(400).json({ message: "shopOrder not found" });
+      return res.status(404).json({ message: "shopOrder not found" });
     }
 
     let deliveryBoyLocation = { lat: null, lon: null };
-    if (assignment.assignedTo.location.coordinates.length == 2) {
+    if (assignment.assignedTo && assignment.assignedTo.location && assignment.assignedTo.location.coordinates && assignment.assignedTo.location.coordinates.length == 2) {
       deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
       deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
     }
@@ -477,7 +659,9 @@ export const getCurrentOrder = async (req, res) => {
       deliveryBoyLocation,
       customerLocation,
     });
-  } catch (error) {}
+  } catch (error) {
+    return res.status(500).json({ message: `get current order error ${error}` });
+  }
 };
 
 export const getOrderById = async (req, res) => {
@@ -520,12 +704,40 @@ export const sendDeliveryOtp = async (req, res) => {
     shopOrder.deliveryOtp = otp;
     shopOrder.otpExpires = Date.now() + 5 * 60 * 1000;
     await order.save();
-    await sendDeliveryOtpMail(order.user, otp);
+    
+    console.log(`[sendDeliveryOtp] Generated OTP for Order ${orderId}: ${otp}`);
+
+    try {
+      await sendDeliveryOtpMail(order.user, otp);
+    } catch (mailError) {
+      console.warn("[sendDeliveryOtp] Nodemailer failed to send email:", mailError.message || mailError);
+      const responsePayload = {
+        success: true,
+        message: "Otp generated (Nodemailer fallback).",
+      };
+      if (process.env.NODE_ENV !== "production") {
+        responsePayload.otp = otp;
+        responsePayload.message += ` OTP is ${otp}`;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Unable to deliver OTP via email. Please check configuration.",
+          error: mailError.message || mailError,
+        });
+      }
+      return res.status(200).json(responsePayload);
+    }
+
     return res
       .status(200)
       .json({ message: `Otp sent Successfuly to ${order?.user?.fullName}` });
   } catch (error) {
-    return res.status(500).json({ message: `delivery otp error ${error}` });
+    console.error("[sendDeliveryOtp] Critical exception caught:", error);
+    return res.status(400).json({
+      success: false,
+      message: "Unable to send OTP",
+      error: error.message || error,
+    });
   }
 };
 
@@ -551,7 +763,25 @@ export const verifyDeliveryOtp = async (req, res) => {
     await DeliveryAssignment.deleteOne({
       shopOrderId: shopOrder._id,
       order: order._id,
-      assignedTo: shopOrder.assignedDeliveryBoy,
+      assignedTo: req.userId,
+    });
+
+    logActivity(req, {
+      activityType: "Delivery",
+      action: "Delivery Completed",
+      targetEntity: "Order",
+      entityId: order._id,
+      description: `Delivery of order ${order._id} completed successfully`,
+      status: "success"
+    });
+
+    logActivity(req, {
+      activityType: "Orders",
+      action: "Order Delivered",
+      targetEntity: "Order",
+      entityId: order._id,
+      description: `Order ${order._id} delivered successfully`,
+      status: "success"
     });
 
     return res.status(200).json({ message: "Order Delivered Successfully!" });
@@ -579,7 +809,7 @@ export const getTodayDeliveries = async (req, res) => {
     orders.forEach((order) => {
       order.shopOrders.forEach((shopOrder) => {
         if (
-          shopOrder.assignedDeliveryBoy == deliveryBoyId &&
+          String(shopOrder.assignedDeliveryBoy) === String(deliveryBoyId) &&
           shopOrder.status == "delivered" &&
           shopOrder.deliveredAt &&
           shopOrder.deliveredAt >= startsOfDay
@@ -606,5 +836,76 @@ export const getTodayDeliveries = async (req, res) => {
     return res.status(200).json(formattedStats);
   } catch (error) {
     return res.status(500).json({ message: `today deliveries error ${error}` });
+  }
+};
+
+export const getPaymentConfig = async (req, res) => {
+  try {
+    return res.status(200).json({
+      isRazorpayAvailable: !!(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
+      upiId: process.env.UPI_ID || "rebite@upi",
+      upiQrCode: process.env.UPI_QR_CODE_URL || ""
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+export const uploadScreenshot = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No screenshot file provided" });
+    }
+    const screenshotUrl = await uploadOnCloudinary(req.file.path);
+    if (!screenshotUrl) {
+      return res.status(500).json({ message: "Cloudinary upload failed" });
+    }
+    return res.status(200).json({ screenshotUrl });
+  } catch (error) {
+    return res.status(500).json({ message: `Screenshot upload error: ${error.message}` });
+  }
+};
+
+export const submitManualPayment = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { paymentUTR, paymentScreenshot } = req.body;
+
+    const order = await Order.findOne({ _id: orderId, user: req.userId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (!order.totalAmount || order.totalAmount <= 0) {
+      return res.status(400).json({ message: "Invalid order amount" });
+    }
+
+    if (!paymentScreenshot) {
+      return res.status(400).json({ message: "Payment screenshot is required" });
+    }
+
+    const utrRegex = /^\d{12}$/;
+    if (!paymentUTR || !utrRegex.test(paymentUTR)) {
+      return res.status(400).json({ message: "Invalid UTR number. It must be exactly 12 digits." });
+    }
+
+    order.paymentStatus = "Under Verification";
+    order.paymentUTR = paymentUTR;
+    order.paymentScreenshot = paymentScreenshot;
+    order.paymentTime = new Date();
+    await order.save();
+
+    logActivity(req, {
+      activityType: "Payments",
+      action: "Payment Started",
+      targetEntity: "Order",
+      entityId: order._id,
+      description: `Manual UPI payment details submitted (UTR: ${paymentUTR}) for verification`,
+      status: "info"
+    });
+
+    return res.status(200).json({ message: "Payment details submitted for verification", order });
+  } catch (error) {
+    return res.status(500).json({ message: `submitManualPayment error: ${error.message}` });
   }
 };

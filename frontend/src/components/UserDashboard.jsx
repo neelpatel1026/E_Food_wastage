@@ -264,8 +264,7 @@ function UserDashboard() {
 
   return (
     <div
-      className="w-screen min-h-screen flex flex-col gap-8 items-center
-      bg-gradient-to-br from-orange-50 via-rose-50 to-pink-50 overflow-y-auto"
+      className="w-full flex flex-col gap-10 items-center bg-[#FAFAFA] pb-16 overflow-y-auto"
     >
       <Nav />
 

@@ -27,52 +27,73 @@ function OwnerOrderCard({ data }) {
     }
   };
 
+  const getStatusPillClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-50 text-yellow-700 border-yellow-250";
+      case "preparing":
+        return "bg-amber-50 text-amber-700 border-amber-250";
+      case "out of delivery":
+      case "dispatched":
+        return "bg-orange-50 text-orange-700 border-orange-250";
+      case "delivered":
+      case "completed":
+        return "bg-green-50 text-green-700 border-green-250";
+      case "cancelled":
+        return "bg-gray-100 text-gray-500 border-gray-250";
+      default:
+        return "bg-gray-50 text-gray-750 border-gray-250";
+    }
+  };
+
   return (
     <div
-      className="bg-white rounded-2xl shadow-lg border border-gray-100
-      p-5 space-y-5 hover:shadow-xl transition"
+      className="bg-white rounded-3xl border border-gray-200
+      p-6 space-y-6 shadow-sm hover:shadow-md transition"
     >
 
       {/* ================= CUSTOMER INFO ================= */}
-      <div className="space-y-1">
+      <div className="space-y-1 bg-white">
 
-        <h2 className="text-lg font-bold text-gray-800">
+        <h2 className="text-xl font-extrabold text-gray-900">
           {data.user.fullName}
         </h2>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-xs text-gray-400">
           {data.user.email}
         </p>
 
-        <p className="flex items-center gap-2 text-sm text-gray-600">
+        <p className="flex items-center gap-2 text-xs font-semibold text-gray-650 mt-1">
           <MdPhone className="text-orange-500" />
           {data.user.mobile}
         </p>
 
-        {data.paymentMethod === "online" ? (
-          <p className="text-sm text-gray-600">
-            Payment:{" "}
-            <span className="font-semibold text-green-600">
-              {data.payment ? "Paid" : "Pending"}
+        <div className="mt-2 text-xs text-gray-600">
+          {data.paymentMethod === "online" ? (
+            <span>
+              Payment:{" "}
+              <span className={`font-bold ${data.payment ? "text-green-600" : "text-yellow-600"}`}>
+                {data.payment ? "Paid Securely" : "Pending"}
+              </span>
             </span>
-          </p>
-        ) : (
-          <p className="text-sm text-gray-600">
-            Payment Method:{" "}
-            <span className="font-semibold capitalize">
-              {data.paymentMethod}
+          ) : (
+            <span>
+              Payment Method:{" "}
+              <span className="font-bold uppercase">
+                {data.paymentMethod}
+              </span>
             </span>
-          </p>
-        )}
+          )}
+        </div>
 
       </div>
 
       {/* ================= ADDRESS ================= */}
-      <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
+      <div className="text-xs text-gray-600 bg-gray-50/50 border border-gray-200 p-4 rounded-2xl">
 
-        <p>{data?.deliveryAddress?.text}</p>
+        <p className="font-medium text-gray-800">{data?.deliveryAddress?.text}</p>
 
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-[10px] text-gray-400 mt-1.5">
           Lat: {data?.deliveryAddress.latitude} | Lon:{" "}
           {data?.deliveryAddress.longitude}
         </p>
@@ -84,50 +105,49 @@ function OwnerOrderCard({ data }) {
 
         {data.shopOrders.shopOrderItems.map((item, index) => {
 
-  if (!item?.item) return null;
+          if (!item?.item) return null;
 
-  return (
-    <div
-      key={index}
-      className="shrink-0 w-40 bg-white border border-gray-100
-      rounded-xl shadow-sm p-2 hover:shadow-md transition"
-    >
+          return (
+            <div
+              key={index}
+              className="shrink-0 w-40 bg-white border border-gray-200
+              rounded-2xl p-2.5 hover:shadow-sm transition"
+            >
 
-      <img
-        src={item.item?.image || "/no-image.png"}
-        alt=""
-        className="w-full h-24 object-cover rounded-lg"
-      />
+              <img
+                src={item.item?.image || "/no-image.png"}
+                alt=""
+                className="w-full h-20 object-cover rounded-xl"
+              />
 
-      <p className="text-sm font-semibold mt-2">
-        {item.name}
-      </p>
+              <p className="text-xs font-bold text-gray-900 mt-2 truncate">
+                {item.name}
+              </p>
 
-      <p className="text-xs text-gray-500">
-        Qty: {item.quantity} × ₹{item.price}
-      </p>
+              <p className="text-[10px] text-gray-400 mt-0.5">
+                Qty: {item.quantity} × ₹{item.price}
+              </p>
 
-    </div>
-  );
+            </div>
+          );
 
-})}
-
+        })}
       </div>
 
       {/* ================= STATUS SECTION ================= */}
-      <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+      <div className="flex justify-between items-center pt-3 border-t border-gray-200/60">
 
-        <span className="text-sm text-gray-600">
+        <span className="text-xs text-gray-600 font-semibold">
           Status:{" "}
-          <span className="font-semibold capitalize text-orange-600">
+          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded border ${getStatusPillClass(data.shopOrders.status)}`}>
             {data.shopOrders.status}
           </span>
         </span>
 
         <select
-          className="rounded-lg border border-orange-400
-          px-3 py-1 text-sm text-orange-600
-          focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="rounded-xl border border-gray-200 bg-white
+          px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-orange-500
+          focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition cursor-pointer"
           onChange={(e) =>
             handleUpdateStatus(
               data._id,
@@ -136,12 +156,10 @@ function OwnerOrderCard({ data }) {
             )
           }
         >
-
-          <option value="">Change</option>
+          <option value="">Change Status</option>
           <option value="pending">Pending</option>
           <option value="preparing">Preparing</option>
           <option value="out of delivery">Out Of Delivery</option>
-
         </select>
 
       </div>
@@ -150,34 +168,34 @@ function OwnerOrderCard({ data }) {
 
       {data.shopOrders.status === "out of delivery" && (
         <div
-          className="bg-orange-50 border border-orange-200
-          rounded-xl p-3 text-sm space-y-2"
+          className="bg-orange-50/30 border border-orange-100
+          rounded-2xl p-4 text-xs space-y-2"
         >
 
           {data.shopOrders.assignedDeliveryBoy ? (
-            <p className="font-semibold text-orange-600">
+            <p className="font-extrabold text-orange-600 uppercase tracking-wide text-[10px]">
               Assigned Delivery Boy
             </p>
           ) : (
-            <p className="font-semibold text-orange-600">
+            <p className="font-extrabold text-orange-600 uppercase tracking-wide text-[10px]">
               Available Delivery Boys
             </p>
           )}
 
           {availableBoys?.length > 0 ? (
             availableBoys.map((b, index) => (
-              <div key={index} className="text-gray-700">
-                {b.fullName} - {b.mobile}
+              <div key={index} className="text-gray-700 font-medium">
+                🏍️ {b.fullName} - {b.mobile}
               </div>
             ))
           ) : data.shopOrders.assignedDeliveryBoy ? (
-            <div className="text-gray-700">
-              {data.shopOrders.assignedDeliveryBoy.fullName} -{" "}
+            <div className="text-gray-700 font-medium">
+              🏍️ {data.shopOrders.assignedDeliveryBoy.fullName} -{" "}
               {data.shopOrders.assignedDeliveryBoy.mobile}
             </div>
           ) : (
-            <div className="text-gray-500">
-              Waiting for delivery boy to accept
+            <div className="text-gray-405 italic">
+              Waiting for delivery boy to accept...
             </div>
           )}
 
@@ -186,13 +204,11 @@ function OwnerOrderCard({ data }) {
 
       {/* ================= TOTAL ================= */}
 
-      <div className="text-right font-bold text-gray-800 text-lg">
-
-        Total:{" "}
-        <span className="text-orange-600">
+      <div className="text-right font-bold text-gray-900 text-base border-t border-gray-200/60 pt-3">
+        Total Subtotal:{" "}
+        <span className="text-orange-500 font-black">
           ₹{data.shopOrders.subtotal}
         </span>
-
       </div>
 
     </div>

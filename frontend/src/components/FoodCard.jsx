@@ -19,7 +19,6 @@ function FoodCard({ data }) {
     stock,
   } = data;
 
-  const [timeLeft, setTimeLeft] = useState("");
   const [added, setAdded] = useState(false);
   const [limitMsg, setLimitMsg] = useState(false);
 
@@ -70,175 +69,189 @@ function FoodCard({ data }) {
     }, 900);
   };
 
-  /* ================= COUNTDOWN ================= */
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [localExpired, setLocalExpired] = useState(false);
 
   useEffect(() => {
     if (!expiresAt) return;
 
-    const interval = setInterval(() => {
+    const updateTimer = () => {
       const now = new Date().getTime();
       const distance = new Date(expiresAt).getTime() - now;
 
-      // if (distance <= 0) {
-      //   setTimeLeft("Expired");
-      //   clearInterval(interval);
-      // } else {
-      //   // const minutes = Math.floor((distance / 1000 / 60) % 60);
-      //   // const seconds = Math.floor((distance / 1000) % 60);
-
-      //   // setTimeLeft(`${minutes}m ${seconds}s`);
-      //   const hours = Math.floor(distance / (1000 * 60 * 60));
-
-      //   const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-
-      //   if (hours > 0) {
-      //     setTimeLeft(`${hours}h ${minutes}m`);
-      //   } else {
-      //     setTimeLeft(`${minutes}m`);
-      //   }
-      // }
       if (distance <= 0) {
         setTimeLeft("Expired");
-        clearInterval(interval);
+        setLocalExpired(true);
       } else {
-        const hours = Math.floor(distance / (1000 * 60 * 60));
-
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-
-        if (hours > 0) {
-          setTimeLeft(`${hours}h ${minutes}m`);
-        } else {
-          setTimeLeft(`${minutes}m`);
-        }
+        setTimeLeft(distance);
+        setLocalExpired(false);
       }
-    }, 1000);
+    };
 
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);
 
+  const activeExpired = isExpired || localExpired;
+
+  const getTimerMarkup = () => {
+    if (!expiresAt) return null;
+    if (activeExpired) {
+      return (
+        <span className="text-[9px] font-black text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-md uppercase">
+          ❌ Expired
+        </span>
+      );
+    }
+
+    const now = new Date().getTime();
+    const distance = new Date(expiresAt).getTime() - now;
+
+    if (distance <= 0) {
+      return (
+        <span className="text-[9px] font-black text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-md uppercase">
+          ❌ Expired
+        </span>
+      );
+    }
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    let timeText = "";
+    if (days > 0) {
+      timeText = `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m`;
+    } else if (hours > 0) {
+      timeText = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+    } else if (minutes > 0) {
+      timeText = `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+    } else {
+      timeText = `${seconds}s`;
+    }
+
+    const totalMinutes = Math.floor(distance / (1000 * 60));
+
+    if (totalMinutes < 15) {
+      return (
+        <span className="text-[9px] font-black text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md uppercase animate-pulse flex items-center gap-1 shrink-0">
+          🔥 Almost Expired ({timeText})
+        </span>
+      );
+    } else if (totalMinutes < 60) {
+      return (
+        <span className="text-[9px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0">
+          ⚠️ Hurry! Only {totalMinutes} minutes left
+        </span>
+      );
+    }
+
+    return (
+      <span className="text-[9px] font-black text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0">
+        ⏳ {timeText}
+      </span>
+    );
+  };
+
   return (
     <div
-      className="relative w-60 bg-white rounded-2xl shadow-md
-      overflow-hidden border border-gray-100
-      hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+      className={`relative w-64 bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-200 transition-all duration-300 ${
+        activeExpired 
+          ? "opacity-65 filter grayscale-[30%] blur-[0.5px] border-gray-300" 
+          : "hover:shadow-md hover:-translate-y-1.5"
+      }`}
     >
       {/* Discount Badge */}
-      {discount > 0 && !isExpired && (
+      {discount > 0 && !activeExpired && (
         <div
           className="absolute top-3 left-3 bg-red-500 text-white
-          text-xs px-3 py-1 rounded-full font-semibold shadow"
+          text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-sm z-10"
         >
           🔥 {discount}% OFF
         </div>
       )}
 
-      {/* Expired Overlay */}
-      {isExpired && (
-        <div
-          className="absolute inset-0 bg-black/60 flex items-center
-          justify-center z-10 backdrop-blur-sm"
-        >
-          <span className="text-white font-bold text-lg">EXPIRED</span>
+      {/* Expired Label overlay */}
+      {activeExpired && (
+        <div className="absolute top-3 right-3 bg-gray-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-lg shadow-sm z-10">
+          ❌ Expired
         </div>
       )}
 
       {/* Image */}
-      <div className="overflow-hidden">
+      <div className="overflow-hidden aspect-[4/3] bg-gray-50 border-b border-gray-100">
         <img
           src={image}
           alt={name}
-          className="w-full h-40 object-cover hover:scale-105 transition duration-300"
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
         />
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col gap-2">
-        <h2 className="font-semibold text-gray-800 text-sm line-clamp-2">
+      <div className="p-4 flex flex-col gap-2.5">
+        <h2 className="font-bold text-gray-900 text-sm line-clamp-1">
           {name}
         </h2>
 
         {/* Price */}
-        <div className="flex items-center gap-2">
-          {discount > 0 && !isExpired ? (
+        <div className="flex items-baseline gap-2">
+          {discount > 0 && !activeExpired ? (
             <>
-              <span className="line-through text-gray-400 text-sm">
-                ₹{formatPrice(price)}
-              </span>
-
-              <span className="text-red-600 font-bold text-base">
+              <span className="text-red-600 font-extrabold text-lg">
                 ₹{formatPrice(finalPrice || price * (1 - discount / 100))}
+              </span>
+              <span className="line-through text-gray-400 text-xs font-semibold">
+                ₹{formatPrice(price)}
               </span>
             </>
           ) : (
-            <span className="text-gray-800 font-bold text-base">
+            <span className="text-gray-900 font-extrabold text-lg">
               ₹{formatPrice(price)}
             </span>
           )}
-          {/* <div
-  className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full w-fit ${stockColor}`}
->
-  <FaBoxOpen size={12} />
-  {stockMessage}
-</div> */}
         </div>
 
-        {/* STOCK BADGE (NEW UI) */}
-        <div
-          className={`text-xs font-medium px-2 py-1 rounded-full w-fit ${stockColor}`}
-        >
-          {stockMessage}
+        {/* Stock & Expiry Badges */}
+        <div className="flex flex-wrap gap-1.5 items-center mt-0.5">
+          <div
+            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md border ${stockColor}`}
+          >
+            {stockMessage}
+          </div>
+
+          {getTimerMarkup()}
         </div>
-
-        {/* Expiry Timer */}
-        {timeLeft && !isExpired && (
-          <div
-            className="text-xs font-medium text-red-500
-            bg-red-50 px-2 py-1 rounded-full w-fit"
-          >
-            ⏳ {timeLeft}
-          </div>
-        )}
-
-        {/* Out Of Stock Badge */}
-        {/* {isOutOfStock && (
-          <div
-            className="text-xs font-medium text-gray-600
-            bg-gray-100 px-2 py-1 rounded-full w-fit"
-          >
-            Out of Stock
-          </div>
-        )} */}
 
         {/* Cart Limit Warning */}
         {limitMsg && (
           <div
-            className="flex items-center gap-2
-            bg-red-100 text-red-700
-            text-xs font-semibold
-            px-3 py-1.5 rounded-lg
-            shadow-md
-            border border-red-200"
+            className="flex items-center gap-1.5
+            bg-red-50 text-red-700
+            text-[10px] font-bold
+            px-2.5 py-1 rounded-lg
+            border border-red-100 mt-1"
           >
-            <span className="text-sm">⚠</span>
-            Only {stock} items available
+            <span>⚠️ Limit: {stock} available</span>
           </div>
         )}
 
         {/* Add To Cart Button */}
         <button
           onClick={handleAddToCart}
-          disabled={isExpired || isOutOfStock}
-          className={`mt-2 py-2 rounded-xl text-sm font-semibold
-          transition-all duration-200
+          disabled={activeExpired || isOutOfStock}
+          className={`mt-2 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase
+          transition-all duration-200 hover:scale-102
           ${
-            isExpired || isOutOfStock
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            activeExpired || isOutOfStock
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
               : added
-                ? "bg-green-500 text-white scale-95"
-                : "bg-orange-500 text-white hover:bg-orange-600 hover:scale-105"
+                ? "bg-green-600 text-white"
+                : "bg-orange-500 hover:bg-orange-600 text-white shadow-sm"
           }`}
         >
-          {isExpired
+          {activeExpired
             ? "Expired"
             : isOutOfStock
               ? "Out of Stock"

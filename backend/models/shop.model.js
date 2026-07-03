@@ -29,7 +29,12 @@ const shopSchema=new mongoose.Schema({
     items:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Item"
-    }]
+    }],
+    status:{
+        type:String,
+        enum:["pending","approved","rejected","disabled"],
+        default:"approved"
+    }
 
 },{timestamps:true})
 

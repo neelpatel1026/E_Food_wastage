@@ -55,12 +55,15 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import itemRouter from "./routes/item.routes.js";
 import shopRouter from "./routes/shop.routes.js";
 import orderRouter from "./routes/order.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 
 import { socketHandler } from "./socket.js";
 
@@ -69,13 +72,12 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-/* ===============================
-   Allowed Frontend Origins
-================================ */
+const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "";
 const allowedOrigins = [
   "http://localhost:5173", // local development
-  process.env.CLIENT_URL, // deployed frontend URL
+  clientUrl, // deployed frontend URL
 ].filter(Boolean);
+
 
 /* ===============================
    Socket.IO Configuration
@@ -134,6 +136,21 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests, please try again later" }
+});
+app.use("/api/", limiter);
 
 console.log("CLIENT_URL =", process.env.CLIENT_URL);
 console.log("allowedOrigins =", allowedOrigins);
@@ -146,6 +163,7 @@ app.use("/api/user", userRouter);
 app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/order", orderRouter);
+app.use("/api/admin", adminRouter);
 
 /* ===============================
    Socket Handler

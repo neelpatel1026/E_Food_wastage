@@ -32,22 +32,24 @@ function DeliveryBoy() {
     if (!socket || userData.role !== "deliveryBoy") return;
     let watchId;
     if (navigator.geolocation) {
-      ((watchId = navigator.geolocation.watchPosition((position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        setDeliveryBoyLocation({ lat: latitude, lon: longitude });
-        socket.emit("updateLocation", {
-          latitude,
-          longitude,
-          userId: userData._id,
-        });
-      })),
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          setDeliveryBoyLocation({ lat: latitude, lon: longitude });
+          socket.emit("updateLocation", {
+            latitude,
+            longitude,
+            userId: userData._id,
+          });
+        },
         (error) => {
           console.log(error);
         },
         {
           enableHighAccuracy: true,
-        });
+        }
+      );
     }
 
     return () => {
@@ -95,6 +97,7 @@ function DeliveryBoy() {
         { withCredentials: true },
       );
       console.log(result.data);
+      setAvailableAssignments((prev) => (prev || []).filter(a => a.assignmentId !== assignmentId));
       await getCurrentOrder();
     } catch (error) {
       console.log(error);
@@ -102,11 +105,13 @@ function DeliveryBoy() {
   };
 
   useEffect(() => {
-    socket.on("newAssignment", (data) => {
-      setAvailableAssignments((prev) => [...prev, data]);
-    });
+    if (!socket) return;
+    const handleNewAssignment = (data) => {
+      setAvailableAssignments((prev) => [...(prev || []), data]);
+    };
+    socket.on("newAssignment", handleNewAssignment);
     return () => {
-      socket.off("newAssignment");
+      socket.off("newAssignment", handleNewAssignment);
     };
   }, [socket]);
 

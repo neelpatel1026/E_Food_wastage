@@ -9,7 +9,8 @@ function useGetMyshop() {
     const dispatch=useDispatch()
     const {userData}=useSelector(state=>state.user)
   useEffect(()=>{
-  const fetchShop=async () => {
+    if (!userData || (userData.role !== "owner" && userData.role !== "superAdmin")) return;
+    const fetchShop=async () => {
     try {
            const result=await axios.get(`${serverUrl}/api/shop/get-my`,{withCredentials:true})
             dispatch(setMyShopData(result.data))

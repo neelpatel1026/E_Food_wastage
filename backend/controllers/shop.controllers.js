@@ -1,5 +1,6 @@
 import Shop from "../models/shop.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
+import { logActivity } from "../utils/activityLogger.js";
 
 export const createEditShop=async (req,res) => {
     try {
@@ -10,17 +11,31 @@ export const createEditShop=async (req,res) => {
         image=await uploadOnCloudinary(req.file.path)
        } 
        let shop=await Shop.findOne({owner:req.userId})
+       const isCreation = !shop;
+
        if(!shop){
         shop=await Shop.create({
         name,city,state,address,image,owner:req.userId
        })
        }else{
-         shop=await Shop.findByIdAndUpdate(shop._id,{
-        name,city,state,address,image,owner:req.userId
-       },{new:true})
+         const updateData = { name, city, state, address, owner: req.userId };
+         if (image) updateData.image = image;
+         shop=await Shop.findByIdAndUpdate(shop._id, updateData, {new:true})
        }
       
        await shop.populate("owner items")
+
+       logActivity(req, {
+         activityType: "Shops",
+         action: isCreation ? "Shop Created" : "Shop Updated",
+         targetEntity: "Shop",
+         entityId: shop._id,
+         description: isCreation
+           ? `Shop "${name}" created successfully by owner`
+           : `Shop details updated for "${name}"`,
+         status: "success"
+       });
+
        return res.status(201).json(shop)
     } catch (error) {
         return res.status(500).json({message:`create shop error ${error}`})
@@ -34,7 +49,7 @@ export const getMyShop=async (req,res) => {
             options:{sort:{updatedAt:-1}}
         })
         if(!shop){
-            return null
+            return res.status(200).json(null)
         }
         return res.status(200).json(shop)
     } catch (error) {

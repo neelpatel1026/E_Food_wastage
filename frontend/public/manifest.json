@@ -1,0 +1,15 @@
+{
+  "short_name": "Rebite",
+  "name": "Rebite - Food Delivery Platform",
+  "icons": [
+    {
+      "src": "vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#F97316",
+  "display": "standalone"
+}

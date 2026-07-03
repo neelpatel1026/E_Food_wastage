@@ -16,7 +16,7 @@ function AddItem() {
 
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [expiryMinutes, setExpiryMinutes] = useState("1");
+  const [expiryHours, setExpiryHours] = useState("1");
   const [stock, setStock] = useState("");
 
   const [name, setName] = useState("");
@@ -53,7 +53,7 @@ function AddItem() {
       // formData.append("price", price);
       formData.append("price", price);
 formData.append("discount", discount);
-      formData.append("expiryMinutes", expiryMinutes);
+      formData.append("expiryHours", expiryHours);
       formData.append("stock", stock);
       if (backendImage) formData.append("image", backendImage);
 
@@ -79,9 +79,7 @@ formData.append("discount", discount);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-6
-    bg-gradient-to-br from-orange-50 via-emerald-50 to-teal-100 relative overflow-hidden">
+  return (    <div className="min-h-screen w-full flex items-center justify-center p-6 bg-[#FAFAFA] relative overflow-hidden">
 
       {/* Floating Icons */}
       <motion.div
@@ -102,11 +100,11 @@ formData.append("discount", discount);
 
       {/* Back Button */}
       <div
-        className="absolute top-6 left-6 bg-white p-2 rounded-full shadow-md cursor-pointer
-        hover:scale-110 transition"
+        className="absolute top-6 left-6 bg-white p-2 rounded-full shadow-sm border border-gray-200 cursor-pointer
+        hover:scale-105 transition"
         onClick={() => navigate("/")}
       >
-        <IoIosArrowRoundBack size={32} className="text-emerald-600" />
+        <IoIosArrowRoundBack size={32} className="text-orange-500" />
       </div>
 
       {/* Card */}
@@ -114,18 +112,18 @@ formData.append("discount", discount);
         initial={{ opacity: 0, y: 70 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="w-full max-w-xl bg-white/90 backdrop-blur-xl
-        shadow-2xl rounded-3xl p-10 border border-white/40 relative z-10"
+        className="w-full max-w-xl bg-white border border-gray-200
+        shadow-sm rounded-3xl p-10 relative z-10"
       >
 
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
 
-          <div className="bg-emerald-100 p-4 rounded-full shadow-md mb-4">
-            <FaUtensils className="text-emerald-600 w-12 h-12" />
+          <div className="bg-orange-50 p-4 rounded-full border border-orange-100 mb-4">
+            <FaUtensils className="text-orange-500 w-10 h-10" />
           </div>
 
-          <h2 className="text-3xl font-bold text-gray-800">
+          <h2 className="text-3xl font-extrabold text-gray-900">
             Add Food Item
           </h2>
 
@@ -140,7 +138,7 @@ formData.append("discount", discount);
 
           {/* Name */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-600">
+            <label className="block mb-2 text-sm font-semibold text-gray-700">
               Food Name
             </label>
 
@@ -150,19 +148,19 @@ formData.append("discount", discount);
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter food name"
               className="w-full px-4 py-3 rounded-xl border border-gray-200
-              focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-805 transition"
             />
           </div>
 
           {/* Image Upload */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-600">
+            <label className="block mb-2 text-sm font-semibold text-gray-750">
               Upload Food Image
             </label>
 
             <div
-              className="relative border-2 border-dashed border-emerald-400
-              rounded-xl p-6 text-center cursor-pointer hover:bg-emerald-50 transition"
+              className="relative border-2 border-dashed border-gray-200 hover:border-orange-500
+              rounded-2xl p-6 text-center cursor-pointer hover:bg-orange-50/20 transition"
             >
 
               <input
@@ -173,9 +171,9 @@ formData.append("discount", discount);
               />
 
               {!frontendImage ? (
-                <div className="flex flex-col items-center text-emerald-600">
+                <div className="flex flex-col items-center text-orange-500">
                   <span className="text-4xl mb-2">📸</span>
-                  <p className="text-sm font-medium">
+                  <p className="text-xs font-bold uppercase tracking-wider">
                     Click to Upload Image
                   </p>
                 </div>
@@ -183,7 +181,7 @@ formData.append("discount", discount);
                 <img
                   src={frontendImage}
                   alt=""
-                  className="w-full h-52 object-cover rounded-xl shadow-md"
+                  className="w-full h-52 object-cover rounded-xl"
                 />
               )}
             </div>
@@ -191,8 +189,8 @@ formData.append("discount", discount);
 
           {/* Price */}
           <div>
-            <label className="block mb-2 text-sm font-medium text-gray-600">
-              Price
+            <label className="block mb-2 text-sm font-semibold text-gray-700">
+              Base Price (₹)
             </label>
 
             <input
@@ -204,51 +202,49 @@ formData.append("discount", discount);
               }}
               placeholder="Enter price"
               className="w-full px-4 py-3 rounded-xl border border-gray-200
-              focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-805 transition"
             />
           </div>
+
+          {/* Discount */}
           <div>
-<div>
-  <label className="block mb-2 text-sm font-medium text-gray-600">
-    Discount (%)
-  </label>
+            <label className="block mb-2 text-sm font-semibold text-gray-750">
+              Discount (%)
+            </label>
 
-  <input
-    type="number"
-    value={discount}
-    min="0"
-    max="100"
-    onChange={(e) => setDiscount(e.target.value)}
-    placeholder="Enter discount %"
-    className="w-full px-4 py-3 rounded-xl border border-gray-200
-    focus:outline-none focus:ring-2 focus:ring-emerald-500"
-  />
-</div>
-
-
-</div>
+            <input
+              type="number"
+              value={discount}
+              min="0"
+              max="100"
+              onChange={(e) => setDiscount(e.target.value)}
+              placeholder="Enter discount %"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-805 transition"
+            />
+          </div>
 
           {/* Expiry + Stock */}
           <div className="grid grid-cols-2 gap-4">
 
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-600">
-                Expiry Time (Minutes)
+              <label className="block mb-2 text-sm font-semibold text-gray-750">
+                Expiry Time (Hours)
               </label>
 
               <input
                 type="number"
-                value={expiryMinutes}
-                onChange={(e) => setExpiryMinutes(e.target.value)}
-                placeholder="60"
+                value={expiryHours}
+                onChange={(e) => setExpiryHours(e.target.value)}
+                placeholder="1"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200
-                focus:ring-2 focus:ring-emerald-500 outline-none"
+                focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-805 transition"
               />
             </div>
 
             <div>
-              <label className="block mb-2 text-sm font-medium text-gray-600">
-                Quantity
+              <label className="block mb-2 text-sm font-semibold text-gray-750">
+                Stock Quantity
               </label>
 
               <input
@@ -258,50 +254,60 @@ formData.append("discount", discount);
                 onChange={(e) => setStock(e.target.value)}
                 placeholder="10"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200
-                focus:ring-2 focus:ring-emerald-500 outline-none"
+                focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-805 transition"
               />
             </div>
 
           </div>
 
           {/* Category */}
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200
-            focus:ring-2 focus:ring-emerald-500 outline-none"
-          >
-            <option value="">Select Category</option>
-            {categories.map((cate, index) => (
-              <option key={index} value={cate}>
-                {cate}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block mb-2 text-sm font-semibold text-gray-700">
+              Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-750 transition cursor-pointer"
+            >
+              <option value="">Select Category</option>
+              {categories.map((cate, index) => (
+                <option key={index} value={cate}>
+                  {cate}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Food Type */}
-          <select
-            value={foodType}
-            onChange={(e) => setFoodType(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200
-            focus:ring-2 focus:ring-emerald-500 outline-none"
-          >
-            <option value="veg">Veg</option>
-            <option value="non veg">Non Veg</option>
-          </select>
+          <div>
+            <label className="block mb-2 text-sm font-semibold text-gray-750">
+              Food Type
+            </label>
+            <select
+              value={foodType}
+              onChange={(e) => setFoodType(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white
+              focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 text-sm text-gray-750 transition cursor-pointer"
+            >
+              <option value="veg">Veg 🌱</option>
+              <option value="non veg">Non Veg 🍗</option>
+            </select>
+          </div>
 
           {/* Submit */}
           <motion.button
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            className="w-full bg-emerald-600 text-white py-3 rounded-xl
-            font-semibold shadow-lg hover:bg-emerald-700 transition"
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.99 }}
+            className="w-full bg-orange-500 text-white py-3.5 rounded-xl
+            font-bold uppercase tracking-wider text-sm shadow-sm hover:bg-orange-600 transition cursor-pointer"
             disabled={loading}
           >
             {loading ? (
               <ClipLoader size={20} color="white" />
             ) : (
-              "Save Food 🍽"
+              "Save Food Item"
             )}
           </motion.button>
 
@@ -315,8 +321,8 @@ formData.append("discount", discount);
             initial={{ opacity: 0, y: -40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="fixed top-6 right-6 bg-emerald-600 text-white px-6 py-3
-            rounded-xl shadow-xl z-[9999]"
+            className="fixed top-6 right-6 bg-green-600 text-white px-6 py-3
+            rounded-xl shadow-md z-[9999] font-bold text-sm"
           >
             ✅ Food Added Successfully!
           </motion.div>

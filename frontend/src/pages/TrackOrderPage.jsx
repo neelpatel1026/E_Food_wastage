@@ -32,15 +32,17 @@ function TrackOrderPage() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("updateDeliveryLocation", ({ deliveryBoyId, latitude, longitude }) => {
+    const handleUpdate = ({ deliveryBoyId, latitude, longitude }) => {
       setLiveLocations((prev) => ({
         ...prev,
         [deliveryBoyId]: { lat: latitude, lon: longitude },
       }));
-    });
+    };
+
+    socket.on("updateDeliveryLocation", handleUpdate);
 
     return () => {
-      socket.off("updateDeliveryLocation");
+      socket.off("updateDeliveryLocation", handleUpdate);
     };
   }, [socket]);
 
@@ -48,8 +50,27 @@ function TrackOrderPage() {
     handleGetOrder();
   }, [orderId]);
 
+  const getStatusPillClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-50 text-yellow-700 border-yellow-250";
+      case "preparing":
+        return "bg-amber-50 text-amber-700 border-amber-250";
+      case "out of delivery":
+      case "dispatched":
+        return "bg-orange-50 text-orange-700 border-orange-250";
+      case "delivered":
+      case "completed":
+        return "bg-green-50 text-green-700 border-green-250";
+      case "cancelled":
+        return "bg-gray-100 text-gray-500 border-gray-250";
+      default:
+        return "bg-gray-50 text-gray-750 border-gray-250";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 py-10 px-4">
+    <div className="min-h-screen bg-[#FAFAFA] py-10 px-4">
 
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
 
@@ -59,12 +80,12 @@ function TrackOrderPage() {
 
           <button
             onClick={() => navigate("/")}
-            className="p-2 rounded-full bg-white shadow hover:shadow-md transition"
+            className="p-2 rounded-full bg-white shadow-sm border border-gray-200 hover:scale-105 transition cursor-pointer"
           >
             <IoIosArrowRoundBack size={28} className="text-orange-500" />
           </button>
 
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-extrabold text-gray-900">
             Track Your Order
           </h1>
 
@@ -76,34 +97,27 @@ function TrackOrderPage() {
 
           <div
             key={index}
-            className="bg-white rounded-3xl shadow-lg border border-orange-100
-            p-6 flex flex-col gap-5 hover:shadow-xl transition"
+            className="bg-white rounded-3xl border border-gray-200
+            p-6 flex flex-col gap-6 shadow-sm hover:shadow-md transition"
           >
 
             {/* SHOP HEADER */}
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center bg-white">
 
               <div>
 
-                <p className="text-xl font-bold text-orange-600">
+                <p className="text-xl font-extrabold text-orange-500">
                   {shopOrder.shop.name}
                 </p>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-xs text-gray-400 mt-0.5">
                   Order #{currentOrder._id.slice(-6)}
                 </p>
 
               </div>
 
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-semibold
-                ${
-                  shopOrder.status === "delivered"
-                    ? "bg-green-100 text-green-600"
-                    : "bg-orange-100 text-orange-600"
-                }`}
-              >
+              <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded border ${getStatusPillClass(shopOrder.status)}`}>
                 {shopOrder.status}
               </span>
 
@@ -111,19 +125,19 @@ function TrackOrderPage() {
 
             {/* ORDER DETAILS */}
 
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
+            <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-650 bg-gray-50/50 border border-gray-200 p-4 rounded-2xl">
 
               <p>
-                <span className="font-semibold">Items:</span>{" "}
+                <span className="font-semibold text-gray-800">Items:</span>{" "}
                 {shopOrder.shopOrderItems?.map((i) => i.name).join(", ")}
               </p>
 
               <p>
-                <span className="font-semibold">Subtotal:</span> ₹{shopOrder.subtotal}
+                <span className="font-semibold text-gray-800">Subtotal:</span> ₹{shopOrder.subtotal}
               </p>
 
               <p className="md:col-span-2">
-                <span className="font-semibold">Delivery Address:</span>{" "}
+                <span className="font-semibold text-gray-800">Delivery Address:</span>{" "}
                 {currentOrder.deliveryAddress?.text}
               </p>
 
@@ -136,24 +150,26 @@ function TrackOrderPage() {
               <>
                 {shopOrder.assignedDeliveryBoy ? (
 
-                  <div className="bg-orange-50 rounded-xl p-4 text-sm space-y-1">
+                  <div className="bg-orange-50/30 border border-orange-100 rounded-2xl p-4 text-xs space-y-1.5">
 
                     <p>
-                      <span className="font-semibold">Delivery Boy:</span>{" "}
-                      {shopOrder.assignedDeliveryBoy.fullName}
+                      <span className="font-extrabold text-orange-600 uppercase tracking-wide text-[10px]">Assigned Delivery Boy</span>
                     </p>
 
-                    <p>
-                      <span className="font-semibold">Contact:</span>{" "}
-                      {shopOrder.assignedDeliveryBoy.mobile}
+                    <p className="font-bold text-gray-800">
+                      🏍️ {shopOrder.assignedDeliveryBoy.fullName}
+                    </p>
+
+                    <p className="text-gray-500 font-semibold">
+                      📞 {shopOrder.assignedDeliveryBoy.mobile}
                     </p>
 
                   </div>
 
                 ) : (
 
-                  <p className="text-gray-600 font-medium">
-                    Delivery Boy is not assigned yet.
+                  <p className="text-gray-500 font-semibold text-sm">
+                    ⌛ Delivery boy is not assigned yet. Waiting for pickup...
                   </p>
 
                 )}
@@ -161,8 +177,8 @@ function TrackOrderPage() {
 
             ) : (
 
-              <p className="text-green-600 font-semibold text-lg">
-                Delivered Successfully
+              <p className="text-green-650 font-bold text-base flex items-center gap-1.5">
+                🟢 Delivered Successfully
               </p>
 
             )}
@@ -172,7 +188,7 @@ function TrackOrderPage() {
             {(shopOrder.assignedDeliveryBoy &&
               shopOrder.status !== "delivered") && (
 
-              <div className="h-[420px] w-full rounded-2xl overflow-hidden shadow">
+              <div className="h-[420px] w-full rounded-2xl overflow-hidden border border-gray-200">
 
                 <DeliveryBoyTracking
                   data={{

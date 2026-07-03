@@ -407,17 +407,15 @@ function Nav() {
   return (
     <motion.div
       animate={{
-        height: scrolled ? 65 : 80,
-        backdropFilter: "blur(12px)",
+        height: scrolled ? 68 : 80,
       }}
       transition={{ duration: 0.3 }}
-      className="w-full fixed top-0 z-[9999] px-6 flex items-center justify-between md:justify-center gap-8
-      bg-gradient-to-r from-orange-500 via-red-500 to-pink-500
-      text-white shadow-lg"
+      className={`w-full fixed top-0 z-[9999] px-6 flex items-center justify-between gap-8 transition-shadow duration-300
+      bg-white border-b border-gray-200 text-gray-900 ${scrolled ? "shadow-md" : "shadow-sm"}`}
     >
       {/* Logo */}
       <h1
-        className="text-3xl font-bold tracking-wide cursor-pointer hover:scale-110 transition"
+        className="text-3xl font-extrabold tracking-tight cursor-pointer text-orange-500 hover:scale-105 transition"
         onClick={() => navigate("/")}
       >
         Rebite
@@ -425,25 +423,24 @@ function Nav() {
 
       {/* ================= SEARCH BAR ================= */}
       {userData.role === "user" && (
-        <div className="relative hidden md:flex md:w-[60%] lg:w-[40%]">
-
+        <div className="relative hidden md:flex md:w-[50%] lg:w-[40%]">
           <div
-            className="flex w-full h-12 bg-white/95 backdrop-blur-lg
-            rounded-full shadow-lg items-center gap-3 px-4 text-gray-700"
+            className="flex w-full h-11 bg-gray-50 border border-gray-200
+            rounded-full items-center gap-3 px-4 text-gray-700 transition focus-within:bg-white focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100"
           >
             {/* Location */}
-            <div className="flex items-center gap-2 border-r pr-3">
-              <FaLocationDot className="text-orange-500" />
-              <span className="font-medium">{currentCity}</span>
+            <div className="flex items-center gap-2 border-r border-gray-200 pr-3">
+              <FaLocationDot className="text-orange-500 shrink-0" size={15} />
+              <span className="font-semibold text-sm max-w-28 truncate">{currentCity}</span>
             </div>
 
             {/* Search Input */}
-            <IoIosSearch className="text-orange-500" size={20} />
+            <IoIosSearch className="text-gray-400 shrink-0" size={18} />
 
             <input
               type="text"
               placeholder="Search food, pizza, burger..."
-              className="w-full outline-none bg-transparent"
+              className="w-full outline-none bg-transparent text-sm text-gray-800 placeholder-gray-400"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -456,7 +453,7 @@ function Nav() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="absolute top-14 w-full bg-white text-gray-800 shadow-xl rounded-xl p-3 flex flex-col gap-2 max-h-72 overflow-y-auto"
+                className="absolute top-13 w-full bg-white text-gray-800 shadow-xl rounded-2xl p-3 flex flex-col gap-2 max-h-72 overflow-y-auto border border-gray-100"
               >
                 {searchItems.length === 0 ? (
                   <div className="text-gray-400 text-sm p-2">
@@ -466,19 +463,16 @@ function Nav() {
                   searchItems.map((item) => (
                     <div
                       key={item._id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition"
-                      // onClick={() => navigate(`/item/${item._id}`)}
-                      // onClick={() => navigate(`/shop/${item.shopId}`)}
-                      // onClick={() => navigate(`/shop/${item.shop}`)}
+                      className="flex items-center gap-3 p-2 rounded-xl hover:bg-orange-50/50 cursor-pointer transition"
                       onClick={() => navigate(`/shop/${item.shop._id}`)}
                     >
                       <img
                         src={item.image}
-                        className="w-10 h-10 object-cover rounded-md"
+                        className="w-10 h-10 object-cover rounded-lg"
                       />
 
                       <div className="flex flex-col">
-                        <span className="font-medium">{item.name}</span>
+                        <span className="font-semibold text-sm text-gray-800">{item.name}</span>
                         <span className="text-xs text-gray-400">
                           {item.shopName}
                         </span>
@@ -498,12 +492,12 @@ function Nav() {
         {/* CART */}
         {userData.role === "user" && (
           <div
-            className="relative cursor-pointer hover:scale-110 transition"
+            className="relative cursor-pointer hover:scale-105 transition p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-700"
             onClick={() => navigate("/cart")}
           >
-            <FiShoppingCart size={23} />
+            <FiShoppingCart size={20} />
 
-            <span className="absolute -top-2 -right-2 bg-white text-orange-600 text-xs font-bold rounded-full px-1.5 py-0.5">
+            <span className="absolute -top-1.5 -right-1.5 bg-orange-500 text-white text-[10px] font-extrabold rounded-full w-5 h-5 flex items-center justify-center border border-white">
               {cartItems.length}
             </span>
           </div>
@@ -511,34 +505,34 @@ function Nav() {
 
         {/* OWNER BUTTONS */}
         {userData.role === "owner" && myShopData && (
-          <>
+          <div className="flex gap-2">
             <button
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full
-              bg-white/20 hover:bg-white/30 transition"
+              className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
+              bg-orange-500 hover:bg-orange-600 text-white shadow-sm transition"
               onClick={() => navigate("/add-item")}
             >
-              <FaPlus size={16} />
+              <FaPlus size={14} />
               Add Food
             </button>
 
             <button
-              className="flex items-center gap-2 px-4 py-2 rounded-full
-              bg-white/20 hover:bg-white/30 transition"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold
+              bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
               onClick={() => navigate("/my-orders")}
             >
               <TbReceipt2 size={16} />
-              <span className="hidden md:block">My Orders</span>
+              <span>My Orders</span>
             </button>
-          </>
+          </div>
         )}
 
         {/* PROFILE */}
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center
-          bg-white text-orange-600 font-bold shadow-md cursor-pointer"
+          className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform
+          bg-orange-500 text-white font-extrabold shadow-md cursor-pointer text-sm"
           onClick={() => setShowInfo((prev) => !prev)}
         >
-          {userData?.fullName?.slice(0, 1)}
+          {userData?.fullName?.slice(0, 1).toUpperCase()}
         </div>
 
         {/* PROFILE DROPDOWN */}
@@ -548,23 +542,41 @@ function Nav() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="absolute top-16 right-6 w-56 bg-white text-gray-800 shadow-xl rounded-xl p-4 flex flex-col gap-3"
+              className="absolute top-16 right-6 w-56 bg-white text-gray-800 shadow-2xl rounded-2xl p-4 flex flex-col gap-3 border border-gray-100"
             >
-              <div className="font-semibold text-lg">
-                {userData.fullName}
+              <div>
+                <div className="font-bold text-gray-800 text-sm">{userData.fullName}</div>
+                <div className="text-[10px] font-semibold text-gray-400 capitalize mt-0.5">{userData.role}</div>
               </div>
+
+              <hr className="border-gray-100" />
 
               {userData.role === "user" && (
                 <div
-                  className="text-orange-500 cursor-pointer hover:text-orange-600"
-                  onClick={() => navigate("/my-orders")}
+                  className="text-gray-700 text-sm font-medium cursor-pointer hover:text-orange-500 transition"
+                  onClick={() => {
+                    setShowInfo(false);
+                    navigate("/my-orders");
+                  }}
                 >
                   My Orders
                 </div>
               )}
 
+              {userData.role === "superAdmin" && (
+                <div
+                  className="text-gray-700 text-sm font-semibold cursor-pointer hover:text-orange-500 transition"
+                  onClick={() => {
+                    setShowInfo(false);
+                    navigate("/admin");
+                  }}
+                >
+                  Admin Dashboard
+                </div>
+              )}
+
               <div
-                className="text-red-500 cursor-pointer hover:text-red-600"
+                className="text-red-500 text-sm font-medium cursor-pointer hover:text-red-600 transition"
                 onClick={handleLogOut}
               >
                 Log Out

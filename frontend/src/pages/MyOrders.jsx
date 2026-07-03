@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import UserOrderCard from "../components/UserOrderCard";
 import OwnerOrderCard from "../components/OwnerOrderCard";
 import {
+  addMyOrder,
   setMyOrders,
   updateRealtimeOrderStatus
 } from "../redux/userSlice";
@@ -18,85 +19,33 @@ function MyOrders() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    if (!socket || !userData) return;
 
-    socket?.on("newOrder", (data) => {
-      if (data.shopOrders?.owner._id === userData._id) {
-        dispatch(setMyOrders([data, ...myOrders]));
+    const handleNewOrder = (data) => {
+      const ownerId = data?.shopOrders?.owner?._id || data?.shopOrders?.owner;
+      if (ownerId && String(ownerId) === String(userData._id)) {
+        dispatch(addMyOrder(data));
       }
-    });
+    };
 
-    socket?.on("update-status", ({ orderId, shopId, status, userId }) => {
+    const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
       if (userId === userData._id) {
         dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
       }
-    });
-
-    return () => {
-      socket?.off("newOrder");
-      socket?.off("update-status");
     };
 
-  }, [socket]);
-  
-//   useEffect(() => {
+    socket.on("newOrder", handleNewOrder);
+    socket.on("update-status", handleStatusUpdate);
 
-//   if (!socket || !userData) return;
-
-//   const handleNewOrder = (data) => {
-
-//     if (data?.shopOrders?.owner?._id === userData._id) {
-//       dispatch(setMyOrders(prev => [data, ...prev]));
-//     }
-
-//   };
-
-//   const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
-
-//     if (userId === userData._id) {
-//       dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
-//     }
-
-//   };
-
-//   socket.on("newOrder", handleNewOrder);
-//   socket.on("update-status", handleStatusUpdate);
-
-//   return () => {
-//     socket.off("newOrder", handleNewOrder);
-//     socket.off("update-status", handleStatusUpdate);
-//   };
-
-// }, [socket, userData, dispatch]);
-
-useEffect(() => {
-
-  if (!socket || !userData) return;
-
-  const handleNewOrder = (data) => {
-
-    if (data?.shopOrders?.owner?._id === userData._id) {
-
-      dispatch(setMyOrders(prev => [data, ...prev]));
-    }
-  };
-  const handleStatusUpdate = ({ orderId, shopId, status, userId }) => {
-    if (userId === userData._id) {
-      dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }));
-    }
-  };
-  socket.on("newOrder", handleNewOrder);
-  socket.on("update-status", handleStatusUpdate);
-  return () => {
-    socket.off("newOrder", handleNewOrder);
-    socket.off("update-status", handleStatusUpdate);
-  };
-
-}, [socket, userData, dispatch]);
+    return () => {
+      socket.off("newOrder", handleNewOrder);
+      socket.off("update-status", handleStatusUpdate);
+    };
+  }, [socket, userData, dispatch]);
 
   return (
     <div
-      className="w-full min-h-screen flex justify-center px-4 py-10
-      bg-gradient-to-br from-orange-50 via-rose-50 to-pink-50"
+      className="w-full min-h-screen flex justify-center px-4 py-10 bg-[#FAFAFA]"
     >
 
       <div className="w-full max-w-5xl">
@@ -106,8 +55,8 @@ useEffect(() => {
         <div className="flex items-center gap-4 mb-8">
 
           <button
-            className="p-2 rounded-full bg-white shadow-md
-            hover:shadow-lg transition"
+            className="p-2 rounded-full bg-white shadow-sm border border-gray-200
+            hover:scale-105 transition cursor-pointer"
             onClick={() => navigate("/")}
           >
             <IoIosArrowRoundBack
@@ -116,7 +65,7 @@ useEffect(() => {
             />
           </button>
 
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-extrabold text-gray-900">
             My Orders
           </h1>
 

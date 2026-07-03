@@ -100,35 +100,29 @@ function OwnerDashboard() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center
-    bg-gradient-to-br from-orange-50 via-rose-50 to-pink-50">
+    <div className="w-full min-h-screen flex flex-col items-center bg-[#FAFAFA] pb-16">
 
       <Nav />
 
       {/* ================= EMPTY SHOP STATE ================= */}
       {!myShopData && (
         <div className="flex justify-center items-center w-full mt-28 px-6">
-          <div className="w-full max-w-md bg-white/90 backdrop-blur-lg
-          shadow-2xl rounded-3xl p-10 border border-gray-100 text-center
-          hover:shadow-3xl transition">
+          <div className="w-full max-w-md bg-white shadow-md rounded-3xl p-10 border border-gray-200 text-center hover:shadow-lg transition">
 
             <div className="flex justify-center mb-5">
-              <FaUtensils className="text-orange-500 w-20 h-20" />
+              <FaUtensils className="text-orange-500 w-16 h-16" />
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">
+            <h2 className="text-2xl font-extrabold text-gray-900 mb-3">
               Add Your Restaurant
             </h2>
 
-            <p className="text-gray-500 mb-7 leading-relaxed">
+            <p className="text-gray-500 mb-7 text-sm leading-relaxed">
               Start selling food before it expires and help reduce food waste.
             </p>
 
             <button
-              className="bg-gradient-to-r from-orange-500 to-red-500
-              text-white px-8 py-3 rounded-full font-medium
-              shadow-lg hover:scale-105 hover:shadow-xl
-              transition duration-200"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full font-bold shadow-sm transition hover:scale-102"
               onClick={() => navigate("/create-edit-shop")}
             >
               Get Started
@@ -142,21 +136,16 @@ function OwnerDashboard() {
         <div className="w-full flex flex-col items-center gap-10 px-6 mt-28">
 
           {/* Welcome Text */}
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 text-center">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 text-center">
             Welcome to <span className="text-orange-500">{myShopData.name}</span>
           </h1>
 
           {/* ================= SHOP CARD ================= */}
-          <div className="relative w-full max-w-3xl bg-white
-          shadow-2xl rounded-3xl overflow-hidden
-          hover:shadow-3xl transition">
+          <div className="relative w-full max-w-3xl bg-white border border-gray-200 shadow-sm rounded-3xl overflow-hidden hover:shadow-md transition">
 
             {/* Edit Button */}
             <div
-              className="absolute top-4 right-4 bg-orange-500 text-white
-              p-3 rounded-full cursor-pointer
-              shadow-lg hover:scale-110 hover:bg-orange-600
-              transition"
+              className="absolute top-4 right-4 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-full cursor-pointer shadow-md transition hover:scale-105"
               onClick={() => navigate("/create-edit-shop")}
             >
               <FaPen size={16} />
@@ -170,13 +159,13 @@ function OwnerDashboard() {
             />
 
             {/* Shop Details */}
-            <div className="p-7 flex flex-col gap-2">
+            <div className="p-7 flex flex-col gap-2 bg-white">
 
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-2xl font-extrabold text-gray-900">
                 {myShopData.name}
               </h2>
 
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 text-sm font-semibold">
                 📍 {myShopData.city}, {myShopData.state}
               </p>
 
